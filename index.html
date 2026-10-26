@@ -1140,7 +1140,8 @@ function drawHead(c,cx,cy,R){
 }
 // back of the collar: the band that wraps behind the neck (drawn before the neck)
 function drawCollarBack(c,cx,top,w,h){const sh=PAL.shirt[AV.shirt];
-  c.fillStyle=shade(sh,-.3);c.beginPath();c.moveTo(cx-w*.3,top+h*.02);c.bezierCurveTo(cx-w*.32,top-h*.1,cx+w*.32,top-h*.1,cx+w*.3,top+h*.02);c.closePath();c.fill()}
+  const g=c.createLinearGradient(0,top-h*.09,0,top+h*.02);g.addColorStop(0,shade(sh,-.05));g.addColorStop(1,shade(sh,-.35));c.fillStyle=g;
+  c.beginPath();c.moveTo(cx-w*.33,top+h*.02);c.bezierCurveTo(cx-w*.35,top-h*.1,cx+w*.35,top-h*.1,cx+w*.33,top+h*.02);c.bezierCurveTo(cx+w*.28,top-h*.04,cx-w*.28,top-h*.04,cx-w*.33,top+h*.02);c.closePath();c.fill()}
 // polo shirt: one smooth outline (neckline, shoulders, sleeves, tapered body, blousing over the belt) with the collar lying on it
 function drawPolo(c,cx,top,w,h,u,withLogo){
   const sh=PAL.shirt[AV.shirt];
@@ -1154,7 +1155,7 @@ function drawPolo(c,cx,top,w,h,u,withLogo){
     c.quadraticCurveTo(cx+w*1.04,top+h*.5,cx+w*1.22,top+h*.46);
     c.bezierCurveTo(cx+w*1.22,top+h*.36,cx+w*1.16,top+h*.22,cx+w*1.06,top+h*.13);
     c.bezierCurveTo(cx+w*.94,top+h*.03,cx+w*.6,top+h*.0,cx+w*.28,top);
-    c.quadraticCurveTo(cx,top+h*.1,cx-w*.28,top);c.closePath()};
+    c.quadraticCurveTo(cx+w*.1,top+h*.08,cx,top+h*.17);c.quadraticCurveTo(cx-w*.1,top+h*.08,cx-w*.28,top);c.closePath()};
   body();let g=c.createLinearGradient(cx-w*1.2,0,cx+w*1.2,0);g.addColorStop(0,shade(sh,-.24));g.addColorStop(.4,shade(sh,.08));g.addColorStop(.6,shade(sh,.02));g.addColorStop(1,shade(sh,-.3));c.fillStyle=g;c.fill();
   c.save();body();c.clip();
   g=c.createLinearGradient(0,top,0,top+h);g.addColorStop(0,'rgba(255,255,255,.06)');g.addColorStop(.7,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,.14)');c.fillStyle=g;c.fillRect(cx-w*1.3,top-h*.1,w*2.6,h*1.2);
@@ -1165,20 +1166,25 @@ function drawPolo(c,cx,top,w,h,u,withLogo){
   c.restore();
   c.strokeStyle=shade(sh,-.38);c.lineWidth=1*u;for(const sd of [-1,1]){c.beginPath();c.moveTo(cx+sd*w*1.2,top+h*.43);c.quadraticCurveTo(cx+sd*w*1.04,top+h*.47,cx+sd*w*.87,top+h*.46);c.stroke()}
   // placket and buttons
-  c.fillStyle=shade(sh,-.05);c.beginPath();c.roundRect(cx-w*.055,top+h*.15,w*.11,h*.28,w*.03);c.fill();
+  c.fillStyle=shade(sh,-.04);c.beginPath();c.roundRect(cx-w*.05,top+h*.16,w*.1,h*.27,w*.03);c.fill();
   c.strokeStyle=shade(sh,-.36);c.lineWidth=.9*u;c.stroke();
   c.fillStyle=shade(sh,.38);for(const k of [.25,.35]){c.beginPath();c.arc(cx,top+h*k,Math.max(1.2*u,w*.022),0,7);c.fill()}
-  // collar: each point starts at the side of the neck, runs out and down, and stops short of the placket
+  // collar: each leaf folds over the band at the side of the neck, lies flat across the collarbone, and its inner edge meets the placket
   for(const sd of [-1,1]){
-    const wing=()=>{c.beginPath();c.moveTo(cx+sd*w*.3,top-h*.045);
-      c.bezierCurveTo(cx+sd*w*.36,top+h*.02,cx+sd*w*.43,top+h*.11,cx+sd*w*.46,top+h*.2);
-      c.quadraticCurveTo(cx+sd*w*.3,top+h*.2,cx+sd*w*.11,top+h*.16);
-      c.quadraticCurveTo(cx+sd*w*.17,top+h*.07,cx+sd*w*.22,top+h*.0);
-      c.quadraticCurveTo(cx+sd*w*.25,top-h*.035,cx+sd*w*.3,top-h*.045);c.closePath()};
-    c.save();c.shadowColor='rgba(0,0,0,.32)';c.shadowBlur=3*u;c.shadowOffsetY=1.4*u;wing();
-    const wg=c.createLinearGradient(cx+sd*w*.15,top,cx+sd*w*.45,top+h*.2);wg.addColorStop(0,shade(sh,.08));wg.addColorStop(1,shade(sh,-.08));c.fillStyle=wg;c.fill();c.restore();
-    wing();c.strokeStyle=shade(sh,-.3);c.lineWidth=.8*u;c.stroke();
-    c.strokeStyle='rgba(255,255,255,.16)';c.lineWidth=.7*u;c.beginPath();c.moveTo(cx+sd*w*.31,top-h*.01);c.bezierCurveTo(cx+sd*w*.36,top+h*.04,cx+sd*w*.41,top+h*.11,cx+sd*w*.43,top+h*.18);c.stroke()}
+    const leaf=()=>{c.beginPath();
+      c.moveTo(cx+sd*w*.2,top-h*.065);                                                     // fold at the back of the neck
+      c.bezierCurveTo(cx+sd*w*.33,top-h*.07,cx+sd*w*.4,top-h*.01,cx+sd*w*.44,top+h*.05);    // fold line round the side of the neck
+      c.bezierCurveTo(cx+sd*w*.49,top+h*.11,cx+sd*w*.53,top+h*.17,cx+sd*w*.55,top+h*.21);   // out to the collar point
+      c.quadraticCurveTo(cx+sd*w*.32,top+h*.2,cx+sd*w*.03,top+h*.17);                       // lower edge back to the placket
+      c.bezierCurveTo(cx+sd*w*.1,top+h*.1,cx+sd*w*.17,top+h*.02,cx+sd*w*.2,top-h*.065);     // inner edge up along the neck
+      c.closePath()};
+    c.save();c.shadowColor='rgba(0,0,0,.28)';c.shadowBlur=4*u;c.shadowOffsetY=1.6*u;leaf();c.fillStyle=sh;c.fill();c.restore();
+    c.save();leaf();c.clip();
+    const lg=c.createLinearGradient(cx+sd*w*.1,top-h*.05,cx+sd*w*.5,top+h*.2);lg.addColorStop(0,shade(sh,.1));lg.addColorStop(.6,shade(sh,0));lg.addColorStop(1,shade(sh,-.12));c.fillStyle=lg;c.fillRect(cx-w,top-h*.2,w*2,h*.5);
+    const rg=c.createLinearGradient(0,top-h*.07,0,top+h*.02);rg.addColorStop(0,'rgba(255,255,255,.18)');rg.addColorStop(1,'rgba(255,255,255,0)');c.fillStyle=rg;c.fillRect(cx-w,top-h*.2,w*2,h*.22);
+    c.restore();
+    leaf();c.strokeStyle='rgba(0,0,0,.16)';c.lineWidth=.7*u;c.stroke();
+    c.strokeStyle='rgba(0,0,0,.12)';c.lineWidth=.6*u;c.setLineDash([1.2*u,1*u]);c.beginPath();c.moveTo(cx+sd*w*.5,top+h*.18);c.quadraticCurveTo(cx+sd*w*.3,top+h*.175,cx+sd*w*.07,top+h*.15);c.stroke();c.setLineDash([])}
   if(withLogo){c.save();c.shadowColor='rgba(0,0,0,.4)';c.shadowBlur=1.5*u;c.shadowOffsetY=.5*u;drawLogo(c,cx-w*.5,top+h*.32,w*.025,false);c.restore()}
 }
 // head-and-shoulders for the handicap card
@@ -1186,7 +1192,7 @@ function drawFace(c,N){
   c.clearRect(0,0,N,N);c.lineCap='round';c.lineJoin='round';
   const bg=c.createRadialGradient(N*.5,N*.35,N*.05,N*.5,N*.5,N*.7);bg.addColorStop(0,'#2c5a3d');bg.addColorStop(1,'#0c1a12');c.fillStyle=bg;c.fillRect(0,0,N,N);
   const R=N*.25,cx=N*.5,cy=N*.48;
-  drawCollarBack(c,cx,N*.79,N*.42,N*.5);drawNeck(c,cx,cy,R,N*.84);
+  drawCollarBack(c,cx,N*.79,N*.42,N*.5);drawNeck(c,cx,cy,R,N*.9);
   drawPolo(c,cx,N*.79,N*.42,N*.5,N/128,false);
   drawHead(c,cx,cy,R);
 }
@@ -1223,7 +1229,7 @@ function drawPortrait(c,W_,H_){
     c.strokeStyle=shade(sk,-.3);c.lineWidth=.6*u;for(const k of [-1.8,0,1.8]){c.beginPath();c.moveTo(hx+k*u,hy+3*u);c.lineTo(hx+k*u,hy+7*u);c.stroke()}}
   // neck then shirt then head, so everything joins up
   const R=17*u,hy=41*u;
-  drawCollarBack(c,cx,68*u,34*u,80*u);drawNeck(c,cx,hy,R,74*u);
+  drawCollarBack(c,cx,68*u,34*u,80*u);drawNeck(c,cx,hy,R,84*u);
   drawPolo(c,cx,68*u,34*u,80*u,u,true);
   drawHead(c,cx,hy,R);
 }
