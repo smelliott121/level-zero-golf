@@ -160,6 +160,8 @@ input[type=range]{width:100%;accent-color:var(--flag)}
 .avtop label{flex:1;display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--muted);min-width:0}
 .avtop input{height:42px;border-radius:8px;border:1px solid var(--line);background:var(--track);color:var(--ink);font:inherit;font-weight:600;padding:0 10px;-webkit-user-select:text;user-select:text;width:100%}
 .opt{display:flex;flex-direction:column;gap:6px}
+.ballrow{display:flex;gap:14px;align-items:center}
+.ballrow canvas{width:80px;height:80px;flex:none;border-radius:10px;background:var(--track)}
 .sw{display:flex;gap:8px;flex-wrap:wrap}
 .sw button{width:34px;height:34px;border-radius:50%;border:2px solid var(--line);padding:0;font-size:16px;color:var(--muted);background:var(--track)}
 .sw button[aria-pressed=true]{border-color:var(--flag);box-shadow:0 0 0 2px var(--flag)}
@@ -260,6 +262,7 @@ input[type=range]{width:100%;accent-color:var(--flag)}
         <div class="opt"><h3>Shirt</h3><div class="sw" data-k="shirt"></div></div>
         <div class="opt"><h3>Trousers</h3><div class="sw" data-k="trousers"></div></div>
         <div class="opt"><h3>Cap</h3><div class="sw" data-k="hat"></div></div>
+        <div class="opt"><h3>Ball</h3><div class="ballrow"><canvas id="ballPrev" width="160" height="160" aria-label="Your ball"></canvas><div class="sw" id="ballSw"></div></div></div>
         <div class="opt"><h3>Swings</h3><div class="seg" id="handSeg"><button data-l="0">Right-handed</button><button data-l="1">Left-handed</button></div></div>
         <div class="sphead"><h3>Skills</h3><span id="spLeft">0 points to spend</span></div>
         <div class="skills" id="skills"></div>
@@ -374,7 +377,13 @@ const PAL={
   shirt:['#f1f3f6','#1f4fa3','#c8352e','#f3c534','#2f8f5b','#e58ab0','#1b1b1b'],
   trousers:['#2b2f38','#c9b48a','#eceee9','#3d5a80','#5b6b4a'],
   hat:[null,'#ffffff','#1b1b1b','#c8352e','#1f4fa3','#2f8f5b']};
-const AV={name:'Player',skin:1,hair:0,shirt:1,trousers:0,hat:1,lefty:0};
+const BALLS=[
+  {name:'Level Zero',base:'#f7f7f3',logo:'#1b1b1b',text:'LZ',sub:'LEVEL ZERO',stripe:null},
+  {name:'Range ball',base:'#f2f0e6',logo:'#c8352e',text:'RANGE',sub:'PRACTICE',stripe:'#c8352e'},
+  {name:'Optic yellow',base:'#f3e64a',logo:'#1b1b1b',text:'LZ',sub:'LEVEL ZERO',stripe:null},
+  {name:'Pink',base:'#f6b6cf',logo:'#7a1f45',text:'LZ',sub:'LEVEL ZERO',stripe:null},
+  {name:'Tour line',base:'#f7f7f3',logo:'#1f4fa3',text:'LZ',sub:'TOUR',stripe:'#1b1b1b',line:true}];
+const AV={name:'Player',skin:1,hair:0,shirt:1,trousers:0,hat:1,lefty:0,ball:0};
 (()=>{const s=ls.get('lzg_av');if(s)for(const k in AV)if(k in s)AV[k]=s[k]})();
 const saveAv=()=>ls.set('lzg_av',AV);
 
@@ -998,10 +1007,14 @@ document.addEventListener('keydown',e=>{if(e.code==='Space'&&!sheetOpen()&&docum
 
 /* ---------- player sheet ---------- */
 function buildSwatches(){
-  document.querySelectorAll('.sw').forEach(box=>{const k=box.dataset.k;box.innerHTML='';
+  document.querySelectorAll('.sw[data-k]').forEach(box=>{const k=box.dataset.k;box.innerHTML='';
     PAL[k].forEach((col,i)=>{const b=document.createElement('button');b.setAttribute('aria-label',`${k} option ${i+1}`);b.setAttribute('aria-pressed',AV[k]===i);
       if(col)b.style.background=col;else b.textContent='–';
       b.onclick=()=>{AV[k]=i;saveAv();buildSwatches()};box.appendChild(b)})});
+  const bs=$('#ballSw');bs.innerHTML='';
+  BALLS.forEach((B,i)=>{const b=document.createElement('button');b.setAttribute('aria-label',B.name);b.title=B.name;b.setAttribute('aria-pressed',String((AV.ball|0)===i));
+    b.style.background=B.stripe?`linear-gradient(${B.base} 0 58%,${B.stripe} 58% 70%,${B.base} 70%)`:B.base;
+    b.onclick=()=>{AV.ball=i;saveAv();buildBall();buildSwatches()};bs.appendChild(b)});
   document.querySelectorAll('#handSeg button').forEach(b=>b.setAttribute('aria-pressed',String(+b.dataset.l===AV.lefty)));
 }
 function buildSkills(){
@@ -1067,6 +1080,37 @@ function swingPose(now){
   if(G.anim){const u=clamp((now-G.anim.t0)/320,0,1),e=1-(1-u)**3;return{b:-maxB*G.swingAmp*e,h:maxH*e,putt}}
   if(G.state==='wait'){return{b:-maxB*G.swingAmp,h:maxH,putt}}
   return{b:Math.sin(now/650)*2.5,h:0,putt};
+}
+
+/* ---------- golf ball: dimpled surface (spins) under fixed lighting ---------- */
+let BALLSPR=null;
+function buildBall(){
+  const B=BALLS[AV.ball]||BALLS[0],N=128,R=N/2,mk=()=>{const c=document.createElement('canvas');c.width=c.height=N;return c};
+  const surf=mk(),x=surf.getContext('2d');
+  x.fillStyle=B.base;x.beginPath();x.arc(R,R,R,0,7);x.fill();
+  if(B.stripe){x.fillStyle=B.stripe;x.fillRect(0,R+R*.42,N,R*.12)}
+  if(B.line){x.fillStyle=B.stripe;x.fillRect(R*.18,R-1.5,N-R*.36,3)}
+  // dimples: hex pattern, squashed towards the edge so the ball reads as a sphere
+  for(let row=-9;row<=9;row++)for(let col=-9;col<=9;col++){const px=R+col*9.6+(row&1?4.8:0),py=R+row*8.3,d=Math.hypot(px-R,py-R)/R;if(d>.97)continue;
+    const rr=3.4*(1-d*d*.35),a=Math.atan2(py-R,px-R),g=x.createRadialGradient(px+.8,py+.8,0,px,py,rr);
+    g.addColorStop(0,'rgba(0,0,0,.2)');g.addColorStop(.7,'rgba(0,0,0,.06)');g.addColorStop(1,'rgba(255,255,255,.12)');
+    x.fillStyle=g;x.beginPath();x.ellipse(px,py,rr,rr*(1-d*.45),a,0,7);x.fill()}
+  x.fillStyle=B.logo;x.textAlign='center';x.textBaseline='middle';
+  x.font='800 28px "Barlow Condensed","Arial Narrow",sans-serif';x.fillText(B.text,R,R-6);
+  x.font='700 11px "Barlow Condensed","Arial Narrow",sans-serif';x.fillText(B.sub,R,R+15);
+  const shade=mk(),y=shade.getContext('2d');
+  let g=y.createRadialGradient(R*.62,R*.55,R*.05,R,R,R);g.addColorStop(0,'rgba(255,255,255,.55)');g.addColorStop(.45,'rgba(255,255,255,0)');g.addColorStop(.82,'rgba(0,0,0,.12)');g.addColorStop(1,'rgba(0,0,0,.42)');
+  y.fillStyle=g;y.beginPath();y.arc(R,R,R,0,7);y.fill();
+  y.fillStyle='rgba(255,255,255,.85)';y.beginPath();y.ellipse(R*.62,R*.5,R*.16,R*.09,-.6,0,7);y.fill();
+  y.strokeStyle='rgba(0,0,0,.28)';y.lineWidth=2;y.beginPath();y.arc(R,R,R-1,0,7);y.stroke();
+  BALLSPR={surf,shade,base:B.base};
+}
+try{document.fonts&&document.fonts.ready.then(()=>buildBall())}catch(e){}
+function drawBall(c,x,y,r,rot){
+  if(!BALLSPR)buildBall();
+  c.save();c.translate(x,y);c.beginPath();c.arc(0,0,r,0,7);c.fillStyle=BALLSPR.base;c.fill();
+  c.save();c.clip();c.rotate(rot||0);c.drawImage(BALLSPR.surf,-r,-r,r*2,r*2);c.restore();
+  c.drawImage(BALLSPR.shade,-r,-r,r*2,r*2);c.restore();
 }
 
 /* ---------- canvas ---------- */
@@ -1261,9 +1305,10 @@ function draw(now){
   if(G.trail.length>1){ctx.beginPath();G.trail.forEach((q,i)=>{const s=S(q),y=s.y-q.h*cam.s*.5;i?ctx.lineTo(s.x,y):ctx.moveTo(s.x,y)});ctx.strokeStyle='rgba(255,255,255,.35)';ctx.lineWidth=1.5;ctx.stroke()}
   if(G.state!=='done'&&G.state!=='wait'||G.anim){const at=S(G.anim?G.anim.from:G.ball),pose=swingPose(now);const avs=clamp(cam.s/13,.55,.95);drawAv(ctx,at.x-AV_BALL*avs*(AV.lefty?-1:1),at.y+.6,avs,pose.b,pose.h,pose.putt)}
   if(!(G.state==='done'&&!G.anim)){
-    const s=S(bp.p),br=clamp(.24*cam.s,2.8,4.2),lift=bp.h*cam.s*.5;
+    const s=S(bp.p),br=clamp(.26*cam.s,3,4.6),lift=bp.h*cam.s*.5;
+    G.rot=(G.rot||0)+(G._lb?dist(bp.p,G._lb):0)*1.6+(bp.h>0?.25:0);G._lb={...bp.p};
     ctx.beginPath();ctx.ellipse(s.x+lift*.3,s.y+1,br*1.1,br*.8,0,0,7);ctx.fillStyle='rgba(0,0,0,.35)';ctx.fill();
-    ctx.beginPath();ctx.arc(s.x,s.y-lift,br*(1+bp.h/120),0,7);ctx.fillStyle='#fff';ctx.fill();ctx.strokeStyle='rgba(0,0,0,.35)';ctx.lineWidth=1;ctx.stroke();
+    drawBall(ctx,s.x,s.y-lift,br*(1+bp.h/120),G.rot);
   }
   {const v=ctx.createRadialGradient(W/2,Hc/2,Math.min(W,Hc)*.35,W/2,Hc/2,Math.max(W,Hc)*.75);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,10,0,.32)');ctx.fillStyle=v;ctx.fillRect(0,0,W,Hc)}
   // wind gauge
@@ -1292,7 +1337,8 @@ function frame(now){
   if(G.state==='meter'){const per=G.club==='Putter'?1800:1500,t=((now-G.meterT0)/per)%1;G.meterP=t<.5?t*2:2-t*2;$('#needle').style.left=G.meterP*100+'%';$('#fill').style.width=G.meterP*100+'%'}
   updateCam();const bp=draw(now);
   if(G.anim&&bp.done&&now-G.anim.t0>350)settle();
-  if(!$('#setSheet').hidden)drawPreview(now);
+  if(!$('#setSheet').hidden){drawPreview(now);const bc=$('#ballPrev'),bx=bc.getContext('2d');bx.clearRect(0,0,160,160);
+    bx.fillStyle='rgba(0,0,0,.3)';bx.beginPath();bx.ellipse(86,140,46,10,0,0,7);bx.fill();drawBall(bx,80,78,58,Math.sin(now/1400)*.5)}
   requestAnimationFrame(frame);
 }
 if(!R)useCourse(pickCourse);startHole(R?R.i:0);openMenu();requestAnimationFrame(frame);
