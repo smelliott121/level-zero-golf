@@ -48,9 +48,10 @@ begin
   return new;
 end $$;
 
-drop trigger if exists rounds_check on public.rounds;
 create trigger rounds_check before insert on public.rounds
   for each row execute function public.check_round();
+-- the trigger runs on its own; nobody needs to call it directly
+revoke execute on function public.check_round() from public, anon, authenticated;
 
 -- row level security: everyone can read the board, players can only write their own rows
 alter table public.players enable row level security;
@@ -63,10 +64,10 @@ drop policy if exists "rounds are public"         on public.rounds;
 drop policy if exists "rounds insert own"         on public.rounds;
 
 create policy "players are public" on public.players for select using (true);
-create policy "players insert own" on public.players for insert with check (auth.uid() = id);
-create policy "players update own" on public.players for update using (auth.uid() = id) with check (auth.uid() = id);
+create policy "players insert own" on public.players for insert with check ((select auth.uid()) = id);
+create policy "players update own" on public.players for update using ((select auth.uid()) = id) with check ((select auth.uid()) = id);
 create policy "rounds are public"  on public.rounds  for select using (true);
-create policy "rounds insert own"  on public.rounds  for insert with check (auth.uid() = player_id);
+create policy "rounds insert own"  on public.rounds  for insert with check ((select auth.uid()) = player_id);
 -- no update or delete policies on rounds: a posted card is final
 
 -- best round per player per course, with their current name, handicap and level
