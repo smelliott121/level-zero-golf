@@ -1,0 +1,16 @@
+{
+  "name": "Level Zero Golf",
+  "short_name": "Level Zero",
+  "description": "Start as a hacker, practise, sign club deals and climb the leaderboard.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0e1c15",
+  "theme_color": "#0e1c15",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
