@@ -364,7 +364,8 @@ const P={lvl:0,xp:0,sp:0,st:{},prac:{date:'',done:{}},gear:null,bests:{},rounds:
   if(s.prac&&s.prac.done)P.prac=s.prac;
   if(s.gear&&BRANDS.some(b=>b.id===s.gear.id))P.gear=s.gear;if(s.bests&&typeof s.bests==='object')P.bests=s.bests;else if(s.best)P.bests.links=s.best;P.rounds=s.rounds|0})();
 const save=()=>ls.set('lzg',P);
-const need=l=>60+l*30;
+// XP to the next level: ~150 XP a day (a round plus the four practice challenges) puts a new player on level 4 after about 5 days
+const need=l=>120+40*l+5*l*l;
 const sk=()=>Math.min(1,P.lvl/50);
 const brand=()=>P.gear?BRANDS.find(b=>b.id===P.gear.id):null;
 const gfx=k=>{const b=brand();return b&&b.fx[k]||0};
