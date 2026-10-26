@@ -499,11 +499,25 @@ function lieAt(p){
   if(H.water.some(e=>inE(p,e)))return'water';
   if((H.clumps||[]).some(([x,y,r])=>Math.hypot(p.x-x,p.y-y)<=r))return'trees';
   if(H.fw.length>1&&dPoly(p,H.fw)<=H.fwW)return'fairway';
-  if(obGap(p)>0)return'ob';
+  if(H._obPoly&&!inPoly(p,H._obPoly))return'ob';
   if(dCL(p)>H.treeD)return'trees';
   return'rough';
 }
 // distance past the out-of-bounds line (positive = OB); the line can sit closer on one side
+function inPoly(p,poly){let c=false;for(let i=0,j=poly.length-1;i<poly.length;j=i++){const a=poly[i],b=poly[j];if((a.y>p.y)!==(b.y>p.y)&&p.x<(b.x-a.x)*(p.y-a.y)/(b.y-a.y)+a.x)c=!c}return c}
+// the out-of-bounds boundary: the hole's centreline, extended behind the tee and past the green, offset left and right with mitred corners
+function buildOB(h){
+  const cl=h.cl,n=cl.length,u=(a,b)=>{const dx=b.x-a.x,dy=b.y-a.y,L=Math.hypot(dx,dy)||1;return{x:dx/L,y:dy/L}};
+  const d0=u(cl[0],cl[1]),dn=u(cl[n-2],cl[n-1]),beyond=dist(cl[n-1],h.pin)+50;
+  const E=[{x:cl[0].x-d0.x*40,y:cl[0].y-d0.y*40},...cl,{x:cl[n-1].x+dn.x*beyond,y:cl[n-1].y+dn.y*beyond}];
+  const L=[],Rr=[];
+  for(let i=0;i<E.length;i++){const a=u(E[Math.max(0,i-1)],E[Math.max(1,i)]),b=u(E[Math.min(E.length-2,i)],E[Math.min(E.length-1,i+1)]);
+    const na={x:a.y,y:-a.x},nb={x:b.y,y:-b.x};let nx=na.x+nb.x,ny=na.y+nb.y;const m=Math.hypot(nx,ny)||1;nx/=m;ny/=m;const sc=1/Math.max(.6,nx*na.x+ny*na.y);
+    Rr.push({x:E[i].x+nx*(h.obR??h.obD)*sc,y:E[i].y+ny*(h.obR??h.obD)*sc});L.push({x:E[i].x-nx*(h.obL??h.obD)*sc,y:E[i].y-ny*(h.obL??h.obD)*sc})}
+  h._obPoly=[...L,...Rr.reverse()];
+  h._stakes=[];const P=h._obPoly;let carry=0;
+  for(let i=0;i<P.length;i++){const a=P[i],b=P[(i+1)%P.length],len=dist(a,b);let t=carry;while(t<len){h._stakes.push({x:a.x+(b.x-a.x)*t/len,y:a.y+(b.y-a.y)*t/len});t+=9}carry=t-len}
+}
 function obGap(p,h=H){let m=1e9,side=1;for(let i=0;i<h.cl.length-1;i++){const a=h.cl[i],b=h.cl[i+1],d=segDist(p,a,b);if(d<m){m=d;side=((b.x-a.x)*(p.y-a.y)-(b.y-a.y)*(p.x-a.x))<0?1:-1}}
   return m-(side>0?(h.obR??h.obD):(h.obL??h.obD))}
 // ground height in yards: elev is the drop or rise from tee to green (negative = downhill), hills are [x,y,size,height] mounds and dips
@@ -537,7 +551,7 @@ function prep(h,seed){
     if(d>h.treeD+5&&Math.hypot(p.x,p.y)>14&&!inE(p,h.green,2.4)&&!h.water.some(e=>inE(p,e,1.3))&&!h.bunkers.some(e=>inE(p,e,1.6))&&!(h.obZones||[]).some(e=>inE(p,e,1.1))&&r()<.85)h._trees.push({...p,r:(d<h.treeD+12?4:5)+r()*4})}
   for(const [cx,cy,cr] of h.clumps||[])for(let x=cx-cr;x<=cx+cr;x+=5.5)for(let y=cy-cr;y<=cy+cr;y+=5.5){const p={x:x+r()*3,y:y+r()*3};if(Math.hypot(p.x-cx,p.y-cy)<=cr*.85)h._trees.push({...p,r:3.5+r()*2.5})}
   // out-of-bounds line
-  h._ob=[];const st=3;contour((x,y)=>obGap({x,y},h),x0,y0,Math.ceil((x1-x0)/st),Math.ceil((y1-y0)/st),st,[0],h._ob);
+  buildOB(h);
   h._terr=[];if(h.elev||h.hills){const L=[];for(let z=-30;z<=30;z+=1.5)L.push(z+.01);contour((x,y)=>terrain({x,y},h),x0,y0,Math.ceil((x1-x0)/4),Math.ceil((y1-y0)/4),4,L,h._terr)}
   // green contours and downhill arrows
   h._cont=[];const g=h.green,gs=.5,gx=g.x-g.rx*1.05,gy=g.y-g.ry*1.05,gnx=Math.ceil(g.rx*2.1/gs),gny=Math.ceil(g.ry*2.1/gs);
@@ -578,7 +592,7 @@ const zoneHalf=()=>G.club==='Putter'?lerp(.05,.17,(mix('accuracy')+mix('putting'
 function zoneC(){let w=G.want;if(G.club==='Putter')w*=1+puttLine().along*KP;return clamp(w/(clubMax(G.club)*OVER),.04,.97)}
 function setDefaults(){
   G.want=defWant();G.aim=0;
-  if(G.club==='Putter'){const L=puttLine();G.aim=Math.atan(-L.drift*G.readF/L.D)/D2R} // caddie's read, sharper with Putting
+  if(G.club==='Putter'){const L=puttLine();G.aim=Math.atan(-L.drift/L.D)/D2R} // set up on the perfect line; pace is the test
 }
 
 /* ---------- wind ---------- */
@@ -648,7 +662,7 @@ function doShot(p){
   const club=G.club,isPutt=club==='Putter',isPitch=club==='Pitch',s=mix(G.lie==='bunker'?'short':catFor(club));
   const w=zoneHalf(),c=zoneC(),err=(p-c)/w,ae=Math.abs(err),pure=ae<=1;
   G.strokes++;G.trail=[];
-  if(isPutt)return doPutt(p,pure,Math.abs(p-c)<=w*SWEET);
+  if(isPutt)return doPutt(p,pure,Math.abs(p-c)<=w*sweetFrac());
   const from={...G.ball},lie=G.lie,max=clubMax(club),pw=p*OVER;
   let d=pure?G.want*(1+gauss()*lerp(.05,.015,s)):max*pw*(1+gauss()*lerp(.07,.025,s));
   let ang=gauss()*lerp(5,1.2,s)*(pure?.6:1+Math.min(2,(ae-1)*.3))+clamp(err,-3,3)*lerp(1.2,.4,s);
@@ -674,7 +688,22 @@ function doShot(p){
   let carry=d*(isPitch?.78:1)*(1+wa*.006*wf);
   const drift=wc*carry*.0038*wf;
   {const z0=terrain(from),f=stuck?0:1;for(let k=0;k<2;k++){const pt={x:from.x+dir.x*carry,y:from.y+dir.y*carry};carry=Math.max(1,d*(isPitch?.78:1)*(1+wa*.006*wf)-(terrain(pt)-z0)*.9*f)}}
-  const land={x:from.x+dir.x*carry+rp.x*drift,y:from.y+dir.y*carry+rp.y*drift};
+  let land={x:from.x+dir.x*carry+rp.x*drift,y:from.y+dir.y*carry+rp.y*drift};
+  const bow0=(curve?-Math.sign(ang)*carry*.1:0)-drift*.5;
+  let treeHit=null;
+  if(!stuck){const apex=carry*(low?.05:.15),dx=land.x-from.x,dy=land.y-from.y,LL=Math.hypot(dx,dy)||1;
+    for(let k=1;k<48&&!treeHit;k++){const t=k/48;let px=from.x+dx*t,py=from.y+dy*t;const bb=bow0*4*t*(1-t);px+=dy/LL*bb;py-=dx/LL*bb;
+      if(Math.hypot(px-from.x,py-from.y)<(lie==='trees'?14:6))continue;const hgt=Math.sin(Math.PI*t)*apex;if(hgt>20)continue;
+      for(const tr of H._trees){if(Math.abs(tr.x-px)>tr.r||Math.abs(tr.y-py)>tr.r)continue;if(Math.hypot(tr.x-px,tr.y-py)<tr.r*.8&&hgt<7+tr.r){treeHit={t,p:{x:px,y:py}};break}}}}
+  if(treeHit){const hp=treeHit.p,r=Math.random();let fin;
+    if(r<.45){fin={x:hp.x+gauss()*1.5,y:hp.y+gauss()*1.5};name='Hit a tree · dropped straight down'}
+    else if(r<.75){const side=Math.random()<.5?-1:1,a=h+side*rand(60,120)*D2R,dd=rand(5,20);fin={x:hp.x+Math.sin(a)*dd,y:hp.y+Math.cos(a)*dd};name=`Off the branches · kicked ${side<0?'left':'right'}`}
+    else{const back=dist(from,hp)*rand(.1,.4),a=h+Math.PI+gauss()*.3;fin={x:hp.x+Math.sin(a)*back,y:hp.y+Math.cos(a)*back};name='Clattered the trees · came back at you'}
+    bad=true;big='Timber!';
+    G.anim={type:'shot',club,from,fromLie:lie,land:hp,end:fin,holed:false,name,bad,bow:0,peak:dist(from,hp)*(low?.04:.11),
+      t0:performance.now(),d1:.5+dist(from,hp)/220,d2:.4+dist(hp,fin)/30};
+    callout(big,'bad');return;
+  }
   const landLie=lieAt(land);
   let rollD=0;
   if(!stuck){
@@ -695,7 +724,8 @@ function doShot(p){
     t0:performance.now(),d1:stuck?.5:.7+carry/220,d2:rollD>0?.35+rollD/45:(holed?.3:0)};
 }
 
-const SWEET=.3; // the bright sliver in the middle of the putting window: perfect pace
+// the bright centre sliver of the putting window: stop on it and the putt drops. Wider with Putting skill, shrinking beyond 15 ft
+function sweetFrac(){const ft=Math.max(1,remaining()*3),base=lerp(.24,.55,mix('putting'));return clamp(base*Math.min(1,Math.pow(15/ft,1.15)),.05,.6)}
 function doPutt(p,pure,perfect){
   const s=mix('putting'),from={...G.ball},L=puttLine(from),max=clubMax('Putter');
   const wantEff=G.want*(1+L.along*KP);
@@ -703,7 +733,7 @@ function doPutt(p,pure,perfect){
   const roll=Math.max(.1,pow/(1+L.along*KP)),f=roll/L.D;
   const aimLat=L.D*Math.tan(G.aim*D2R);
   const sd=lerp(.11,.04,s)*L.D*(pure?.75:1.25)*(G.lie==='fringe'?1.3:1)+.01;
-  const noise=gauss()*sd,lat=aimLat+L.drift+noise;
+  const noise=perfect?0:gauss()*sd*1.35,lat=aimLat+L.drift+noise;
   const cap=.11*(f<=1.25?1:Math.max(0,(1.65-f)/.4));
   const holed=f>=.97&&Math.abs(lat)<cap;
   let name,fEnd,nz;
@@ -975,7 +1005,7 @@ function updateUI(){
   $('#aimChip').textContent=aimTxt;
   const w=zoneHalf(),c=zoneC(),z0=Math.max(0,c-w),z1=Math.min(1,c+w);
   $('#zone').style.left=z0*100+'%';$('#zone').style.width=(z1-z0)*100+'%';
-  const sw0=$('#sweet');sw0.hidden=!putt;if(putt){sw0.style.left=(c-w*SWEET)*100+'%';sw0.style.width=w*SWEET*200+'%'}
+  const sw0=$('#sweet');sw0.hidden=!putt;if(putt){const sf=sweetFrac();sw0.style.left=(c-w*sf)*100+'%';sw0.style.width=w*sf*200+'%'}
   const full=100/OVER;$('#full').style.left=full+'%';$('#fullLab').style.left=`calc(${full}% + 5px)`;
   const aiming=G.state==='aim',a=allowed();
   $('#clubPrev').disabled=!aiming||a.indexOf(G.club)<=0;$('#clubNext').disabled=!aiming||a.indexOf(G.club)>=a.length-1;
@@ -985,7 +1015,7 @@ function updateUI(){
   $('#swingT').textContent=G.state==='meter'?'Strike':putt?'Putt':'Swing';
   $('#swingS').textContent=G.state==='meter'?'tap in the green':aiming?'tap to start':'…';
   const nd=$('#needle');nd.hidden=G.state==='aim'||G.state==='done';
-  if(G.stop!=null){const hit=Math.abs(G.stop-c)<=w;nd.className='needle '+(putt&&Math.abs(G.stop-c)<=w*SWEET?'perfect':hit?'hit':'miss');nd.style.left=G.stop*100+'%';$('#fill').style.width=G.stop*100+'%'}
+  if(G.stop!=null){const hit=Math.abs(G.stop-c)<=w;nd.className='needle '+(putt&&Math.abs(G.stop-c)<=w*sweetFrac()?'perfect':hit?'hit':'miss');nd.style.left=G.stop*100+'%';$('#fill').style.width=G.stop*100+'%'}
   else{nd.className='needle';if(aiming)$('#fill').style.width='0'}
   const hint=$('#hint');hint.innerHTML='';
   if(putt){const L=puttLine(),br=L.drift*G.readF,slope=Math.abs(L.along*100);
@@ -1049,9 +1079,9 @@ $('#closeSet').onclick=()=>{$('#setSheet').hidden=true;if(G&&G.state==='aim'){ne
 
 /* ---------- avatar: side-on, facing the ball ---------- */
 const AV_REACH=17, AV_BALL=17.4;
-function drawAv(c,x,y,sc,b,hinge,putter){
-  const col=k=>PAL[k][AV[k]];
-  c.save();c.translate(x,y);c.scale(sc*(AV.lefty?-1:1),sc);c.lineCap='round';c.lineJoin='round';
+function drawAv(c,x,y,sc,b,hinge,putter,flip){
+  const col=k=>PAL[k][AV[k]],fl=flip===undefined?!!AV.lefty:flip;
+  c.save();c.translate(x,y);c.scale(sc*(fl?-1:1),sc);c.lineCap='round';c.lineJoin='round';
   c.fillStyle='rgba(0,0,0,.28)';c.beginPath();c.ellipse(7,1,13,3,0,0,7);c.fill();
   const turn=clamp(b/170,-1.1,1.1);
   const hip={x:-2.5+turn*.6,y:-17},sh={x:7.5-Math.abs(turn)*1.6-(turn<0?1.5:0),y:-29.5-Math.max(0,-turn)*2.5};
@@ -1262,9 +1292,9 @@ function draw(now){
   ctx.fillStyle='rgba(8,24,6,.32)';
   for(const [,c,r] of vis){ctx.beginPath();ctx.ellipse(c.x+r*.45,c.y+r*.5,r*1.05,r*.85,.5,0,7);ctx.fill()}
   for(const [t,c,r] of vis){const spr=TREE_SPR[Math.abs(Math.floor(t.x*7+t.y*13))%TREE_SPR.length];ctx.drawImage(spr,c.x-r*1.15,c.y-r*1.15,r*2.3,r*2.3)}
-  segPath(H._ob);ctx.strokeStyle='rgba(255,255,255,.22)';ctx.lineWidth=1;ctx.stroke();
+  ctx.beginPath();H._obPoly.forEach((q,i)=>{const t=S(q);i?ctx.lineTo(t.x,t.y):ctx.moveTo(t.x,t.y)});ctx.closePath();ctx.strokeStyle='rgba(255,255,255,.22)';ctx.lineWidth=1;ctx.stroke();
   {const sr=Math.max(1.4,.4*cam.s);ctx.fillStyle='#fff';
-    H._ob.forEach(([a,b],i)=>{if(i%5)return;const s=S({x:(a.x+b.x)/2,y:(a.y+b.y)/2});if(s.x<-5||s.x>W+5||s.y<-5||s.y>Hc+5)return;ctx.beginPath();ctx.arc(s.x,s.y,sr,0,7);ctx.fill()})}
+    H._stakes.forEach(q=>{const s=S(q);if(s.x<-5||s.x>W+5||s.y<-5||s.y>Hc+5)return;ctx.beginPath();ctx.arc(s.x,s.y,sr,0,7);ctx.fill()})}
   // cup and flag blowing with the wind
   const pc=S(H.pin);
   if(!H.noCup){const cr=clamp(.36*cam.s,2.4,5.5);ctx.beginPath();ctx.arc(pc.x,pc.y,cr,0,7);ctx.fillStyle='#0b120d';ctx.fill()}
@@ -1303,7 +1333,12 @@ function draw(now){
   const bp=ballPos(now);
   if(G.anim&&G.anim.type==='shot'&&bp.h>0)G.trail.push({...bp.p,h:bp.h});
   if(G.trail.length>1){ctx.beginPath();G.trail.forEach((q,i)=>{const s=S(q),y=s.y-q.h*cam.s*.5;i?ctx.lineTo(s.x,y):ctx.moveTo(s.x,y)});ctx.strokeStyle='rgba(255,255,255,.35)';ctx.lineWidth=1.5;ctx.stroke()}
-  if(G.state!=='done'&&G.state!=='wait'||G.anim){const at=S(G.anim?G.anim.from:G.ball),pose=swingPose(now);const avs=clamp(cam.s/13,.55,.95);drawAv(ctx,at.x-AV_BALL*avs*(AV.lefty?-1:1),at.y+.6,avs,pose.b,pose.h,pose.putt)}
+  const inTrees=G.anim?G.anim.fromLie==='trees':G.lie==='trees';
+  if((G.state!=='done'&&G.state!=='wait'||G.anim)&&!inTrees){
+    const A=G.anim,hd=A?Math.atan2((A.land||A.end).x-A.from.x,(A.land||A.end).y-A.from.y):heading();
+    // a right-hander has the target on his left: facing right on screen when the shot goes up the screen, facing left when it comes down
+    const down=Math.cos(hd)<0,fl=AV.lefty?!down:down;
+    const at=S(A?A.from:G.ball),pose=swingPose(now),avs=clamp(cam.s/13,.55,.95);drawAv(ctx,at.x-AV_BALL*avs*(fl?-1:1),at.y+.6,avs,pose.b,pose.h,pose.putt,fl)}
   if(!(G.state==='done'&&!G.anim)){
     const s=S(bp.p),br=clamp(.26*cam.s,3,4.6),lift=bp.h*cam.s*.5;
     G.rot=(G.rot||0)+(G._lb?dist(bp.p,G._lb):0)*1.6+(bp.h>0?.25:0);G._lb={...bp.p};
