@@ -1104,8 +1104,8 @@ function drawHead(c,cx,cy,R){
       c.bezierCurveTo(cx+R*.74,cy-R*.52,cx+R*.5,cy-R*.7,cx+R*.18,cy-R*.66);c.bezierCurveTo(cx-R*.18,cy-R*.8,cx-R*.62,cy-R*.66,cx-R*.84,cy-R*.05);c.closePath()};
     const hg=c.createLinearGradient(cx-R,cy-R*1.3,cx+R,cy-R*.3);hg.addColorStop(0,shade(hair,.18));hg.addColorStop(1,shade(hair,-.25));
     hp();c.fillStyle=hg;c.fill();c.save();hp();c.clip();
-    for(let k=0;k<28;k++){const t=k/27,x0=cx-R*.9+t*R*1.8;c.strokeStyle=k%3?shade(hair,-.3):shade(hair,.35);c.lineWidth=R*(k%3?.02:.014);
-      c.beginPath();c.moveTo(x0,cy-R*1.4);c.quadraticCurveTo(x0+R*.25,cy-R*1.05,x0+R*(.1+.25*(1-t)),cy-R*.5);c.stroke()}
+    const sh1=c.createRadialGradient(cx-R*.3,cy-R*1.1,0,cx-R*.3,cy-R*1.1,R*.6);sh1.addColorStop(0,'rgba(255,255,255,.22)');sh1.addColorStop(1,'rgba(255,255,255,0)');c.fillStyle=sh1;c.fillRect(cx-R*1.2,cy-R*1.6,R*2.4,R*1.6);
+    const sh2=c.createLinearGradient(0,cy-R*.9,0,cy-R*.5);sh2.addColorStop(0,'rgba(0,0,0,0)');sh2.addColorStop(1,'rgba(0,0,0,.18)');c.fillStyle=sh2;c.fillRect(cx-R*1.2,cy-R*.9,R*2.4,R*.5);
     c.restore();
   }else{
     // sideburns under the cap
@@ -1138,40 +1138,53 @@ function drawHead(c,cx,cy,R){
   }
   c.restore();
 }
-// polo top: one smooth outline for neck base, shoulders and sleeves, plus collar and placket
+// back of the collar: the band that wraps behind the neck (drawn before the neck)
+function drawCollarBack(c,cx,top,w,h){const sh=PAL.shirt[AV.shirt];
+  c.fillStyle=shade(sh,-.3);c.beginPath();c.moveTo(cx-w*.3,top+h*.02);c.bezierCurveTo(cx-w*.32,top-h*.1,cx+w*.32,top-h*.1,cx+w*.3,top+h*.02);c.closePath();c.fill()}
+// polo shirt: one smooth outline (neckline, shoulders, sleeves, tapered body, blousing over the belt) with the collar lying on it
 function drawPolo(c,cx,top,w,h,u,withLogo){
   const sh=PAL.shirt[AV.shirt];
-  const g=c.createLinearGradient(cx-w,0,cx+w,0);g.addColorStop(0,shade(sh,-.22));g.addColorStop(.42,shade(sh,.1));g.addColorStop(1,shade(sh,-.28));
-  c.fillStyle=g;c.beginPath();c.moveTo(cx-w*.26,top);
-  c.bezierCurveTo(cx-w*.55,top+h*.02,cx-w*.85,top+h*.04,cx-w*.96,top+h*.14);   // trapezius to shoulder
-  c.bezierCurveTo(cx-w*1.12,top+h*.25,cx-w*1.24,top+h*.38,cx-w*1.28,top+h*.5);  // sleeve outer
-  c.quadraticCurveTo(cx-w*1.06,top+h*.56,cx-w*.86,top+h*.54);                     // sleeve hem
-  c.quadraticCurveTo(cx-w*.92,top+h*.8,cx-w*.9,top+h);                            // side
-  c.quadraticCurveTo(cx,top+h*1.05,cx+w*.9,top+h);
-  c.quadraticCurveTo(cx+w*.92,top+h*.8,cx+w*.86,top+h*.54);
-  c.quadraticCurveTo(cx+w*1.06,top+h*.56,cx+w*1.28,top+h*.5);
-  c.bezierCurveTo(cx+w*1.24,top+h*.38,cx+w*1.12,top+h*.25,cx+w*.96,top+h*.14);
-  c.bezierCurveTo(cx+w*.85,top+h*.04,cx+w*.55,top+h*.02,cx+w*.26,top);
-  c.quadraticCurveTo(cx,top+h*.06,cx-w*.26,top);c.closePath();c.fill();
-  // folds and sleeve hem lines
-  c.strokeStyle='rgba(0,0,0,.12)';c.lineWidth=1.2*u;
-  for(const [x0,y0,x1,y1] of [[-.6,.72,-.25,.98],[.55,.7,.28,.98],[-.72,.3,-.5,.5],[.7,.28,.5,.48]]){c.beginPath();c.moveTo(cx+w*x0,top+h*y0);c.quadraticCurveTo(cx+w*(x0+x1)/2+w*.05,top+h*(y0+y1)/2,cx+w*x1,top+h*y1);c.stroke()}
-  c.strokeStyle=shade(sh,-.35);c.lineWidth=1*u;for(const sd of [-1,1]){c.beginPath();c.moveTo(cx+sd*w*1.25,top+h*.47);c.quadraticCurveTo(cx+sd*w*1.06,top+h*.52,cx+sd*w*.88,top+h*.5);c.stroke()}
-  // collar: two curved wings meeting at the placket
-  for(const sd of [-1,1]){const cg=c.createLinearGradient(cx,top,cx+sd*w*.4,top+h*.18);cg.addColorStop(0,shade(sh,-.05));cg.addColorStop(1,shade(sh,-.22));c.fillStyle=cg;
-    c.beginPath();c.moveTo(cx,top+h*.17);c.bezierCurveTo(cx+sd*w*.1,top+h*.08,cx+sd*w*.2,top-h*.02,cx+sd*w*.3,top-h*.03);
-    c.quadraticCurveTo(cx+sd*w*.42,top+h*.06,cx+sd*w*.44,top+h*.13);c.quadraticCurveTo(cx+sd*w*.22,top+h*.12,cx,top+h*.2);c.closePath();c.fill();
-    c.strokeStyle=shade(sh,-.38);c.lineWidth=.9*u;c.stroke()}
-  c.strokeStyle=shade(sh,-.38);c.lineWidth=.9*u;c.beginPath();c.moveTo(cx-w*.06,top+h*.19);c.lineTo(cx-w*.06,top+h*.42);c.quadraticCurveTo(cx,top+h*.44,cx+w*.06,top+h*.42);c.lineTo(cx+w*.06,top+h*.19);c.stroke();
-  c.fillStyle=shade(sh,.35);for(const k of [.26,.35]){c.beginPath();c.arc(cx,top+h*k,1.4*u,0,7);c.fill()}
-  if(withLogo){c.save();c.shadowColor='rgba(0,0,0,.4)';c.shadowBlur=1.5*u;c.shadowOffsetY=.5*u;drawLogo(c,cx-w*.5,top+h*.34,w*.025,false);c.restore()}
+  const body=()=>{c.beginPath();c.moveTo(cx-w*.28,top);
+    c.bezierCurveTo(cx-w*.6,top+h*.0,cx-w*.94,top+h*.03,cx-w*1.06,top+h*.13);          // shoulder line
+    c.bezierCurveTo(cx-w*1.16,top+h*.22,cx-w*1.22,top+h*.36,cx-w*1.22,top+h*.46);      // sleeve cap
+    c.quadraticCurveTo(cx-w*1.04,top+h*.5,cx-w*.86,top+h*.49);                          // sleeve hem
+    c.quadraticCurveTo(cx-w*.9,top+h*.74,cx-w*.8,top+h*.95);                            // side, tapering to the waist
+    c.quadraticCurveTo(cx-w*.4,top+h*1.03,cx,top+h*1.02);c.quadraticCurveTo(cx+w*.4,top+h*1.03,cx+w*.8,top+h*.95);
+    c.quadraticCurveTo(cx+w*.9,top+h*.74,cx+w*.86,top+h*.49);
+    c.quadraticCurveTo(cx+w*1.04,top+h*.5,cx+w*1.22,top+h*.46);
+    c.bezierCurveTo(cx+w*1.22,top+h*.36,cx+w*1.16,top+h*.22,cx+w*1.06,top+h*.13);
+    c.bezierCurveTo(cx+w*.94,top+h*.03,cx+w*.6,top+h*.0,cx+w*.28,top);
+    c.quadraticCurveTo(cx,top+h*.1,cx-w*.28,top);c.closePath()};
+  body();let g=c.createLinearGradient(cx-w*1.2,0,cx+w*1.2,0);g.addColorStop(0,shade(sh,-.24));g.addColorStop(.4,shade(sh,.08));g.addColorStop(.6,shade(sh,.02));g.addColorStop(1,shade(sh,-.3));c.fillStyle=g;c.fill();
+  c.save();body();c.clip();
+  g=c.createLinearGradient(0,top,0,top+h);g.addColorStop(0,'rgba(255,255,255,.06)');g.addColorStop(.7,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,.14)');c.fillStyle=g;c.fillRect(cx-w*1.3,top-h*.1,w*2.6,h*1.2);
+  // soft folds: chest, waist gathering above the belt, sleeve creases
+  c.strokeStyle='rgba(0,0,0,.1)';c.lineWidth=1.3*u;
+  for(const [x0,y0,cx1,cy1,x1,y1] of [[-.62,.82,-.45,.9,-.3,.99],[.6,.8,.42,.9,.26,.99],[-.15,.93,0,.97,.15,.93],[-1.1,.3,-1.0,.36,-.95,.43],[1.1,.3,1.0,.36,.95,.43],[-.5,.5,-.42,.62,-.48,.74],[.48,.48,.4,.6,.46,.72]]){
+    c.beginPath();c.moveTo(cx+w*x0,top+h*y0);c.quadraticCurveTo(cx+w*cx1,top+h*cy1,cx+w*x1,top+h*y1);c.stroke()}
+  c.restore();
+  c.strokeStyle=shade(sh,-.38);c.lineWidth=1*u;for(const sd of [-1,1]){c.beginPath();c.moveTo(cx+sd*w*1.2,top+h*.43);c.quadraticCurveTo(cx+sd*w*1.04,top+h*.47,cx+sd*w*.87,top+h*.46);c.stroke()}
+  // placket and buttons
+  c.fillStyle=shade(sh,-.05);c.beginPath();c.roundRect(cx-w*.055,top+h*.12,w*.11,h*.3,w*.03);c.fill();
+  c.strokeStyle=shade(sh,-.36);c.lineWidth=.9*u;c.stroke();
+  c.fillStyle=shade(sh,.38);for(const k of [.24,.34]){c.beginPath();c.arc(cx,top+h*k,Math.max(1.2*u,w*.022),0,7);c.fill()}
+  // collar: stand rising round the neck, then the two points folding down onto the shirt, casting a soft shadow
+  for(const sd of [-1,1]){
+    c.fillStyle=shade(sh,-.12);c.beginPath();c.moveTo(cx+sd*w*.3,top+h*.02);c.quadraticCurveTo(cx+sd*w*.31,top-h*.05,cx+sd*w*.24,top-h*.07);c.quadraticCurveTo(cx+sd*w*.2,top,cx+sd*w*.14,top+h*.08);c.closePath();c.fill();
+    const wing=()=>{c.beginPath();c.moveTo(cx+sd*w*.25,top-h*.05);c.bezierCurveTo(cx+sd*w*.34,top-h*.01,cx+sd*w*.44,top+h*.08,cx+sd*w*.46,top+h*.17);
+      c.quadraticCurveTo(cx+sd*w*.24,top+h*.17,cx+sd*w*.02,top+h*.14);c.quadraticCurveTo(cx+sd*w*.12,top+h*.06,cx+sd*w*.25,top-h*.05);c.closePath()};
+    c.save();c.shadowColor='rgba(0,0,0,.35)';c.shadowBlur=3*u;c.shadowOffsetY=1.5*u;wing();
+    const wg=c.createLinearGradient(cx+sd*w*.1,top,cx+sd*w*.45,top+h*.17);wg.addColorStop(0,shade(sh,.06));wg.addColorStop(1,shade(sh,-.1));c.fillStyle=wg;c.fill();c.restore();
+    wing();c.strokeStyle=shade(sh,-.32);c.lineWidth=.9*u;c.stroke();
+    c.strokeStyle='rgba(255,255,255,.18)';c.lineWidth=.8*u;c.beginPath();c.moveTo(cx+sd*w*.27,top-h*.02);c.bezierCurveTo(cx+sd*w*.35,top+h*.02,cx+sd*w*.41,top+h*.09,cx+sd*w*.42,top+h*.15);c.stroke()}
+  if(withLogo){c.save();c.shadowColor='rgba(0,0,0,.4)';c.shadowBlur=1.5*u;c.shadowOffsetY=.5*u;drawLogo(c,cx-w*.5,top+h*.32,w*.025,false);c.restore()}
 }
 // head-and-shoulders for the handicap card
 function drawFace(c,N){
   c.clearRect(0,0,N,N);c.lineCap='round';c.lineJoin='round';
   const bg=c.createRadialGradient(N*.5,N*.35,N*.05,N*.5,N*.5,N*.7);bg.addColorStop(0,'#2c5a3d');bg.addColorStop(1,'#0c1a12');c.fillStyle=bg;c.fillRect(0,0,N,N);
   const R=N*.25,cx=N*.5,cy=N*.48;
-  drawNeck(c,cx,cy,R,N*.84);
+  drawCollarBack(c,cx,N*.79,N*.42,N*.5);drawNeck(c,cx,cy,R,N*.84);
   drawPolo(c,cx,N*.79,N*.42,N*.5,N/128,false);
   drawHead(c,cx,cy,R);
 }
@@ -1181,9 +1194,9 @@ function drawPortrait(c,W_,H_){
   c.clearRect(0,0,W_,H_);c.lineCap='round';c.lineJoin='round';
   c.fillStyle='rgba(0,0,0,.4)';c.beginPath();c.ellipse(cx,287*u,62*u,6*u,0,0,7);c.fill();
   // legs
-  for(const sd of [-1,1]){const x=cx+sd*15*u;
+  for(const sd of [-1,1]){const x=cx+sd*13.5*u;
     const tg=c.createLinearGradient(x-14*u,0,x+14*u,0);tg.addColorStop(0,shade(tr,sd<0?-.12:-.3));tg.addColorStop(.5,shade(tr,sd<0?.1:-.05));tg.addColorStop(1,shade(tr,sd<0?-.18:-.38));
-    c.fillStyle=tg;c.beginPath();c.moveTo(x-17*u,150*u);c.lineTo(x+17*u,150*u);c.quadraticCurveTo(x+15*u,215*u,x+12*u,272*u);c.quadraticCurveTo(x,277*u,x-12*u,272*u);c.quadraticCurveTo(x-15*u,215*u,x-17*u,150*u);c.closePath();c.fill();
+    c.fillStyle=tg;c.beginPath();c.moveTo(x-14*u,148*u);c.lineTo(x+14*u,148*u);c.quadraticCurveTo(x+13*u,215*u,x+11*u,272*u);c.quadraticCurveTo(x,277*u,x-11*u,272*u);c.quadraticCurveTo(x-13*u,215*u,x-14*u,148*u);c.closePath();c.fill();
     c.strokeStyle='rgba(0,0,0,.16)';c.lineWidth=1*u;c.beginPath();c.moveTo(x-4*u,212*u);c.quadraticCurveTo(x,216*u,x+5*u,212*u);c.moveTo(x-6*u,268*u);c.quadraticCurveTo(x,264*u,x+6*u,268*u);c.stroke()}
   // shoes
   for(const sd of [-1,1]){const x=cx+sd*16*u;c.fillStyle='#2a2a2a';c.beginPath();c.ellipse(x+sd*2*u,284*u,15*u,4*u,0,0,7);c.fill();
@@ -1191,19 +1204,21 @@ function drawPortrait(c,W_,H_){
     c.beginPath();c.moveTo(x-12*u,282*u);c.quadraticCurveTo(x-13*u,270*u,x,269*u);c.quadraticCurveTo(x+14*u,270*u,x+15*u,282*u);c.quadraticCurveTo(x,284*u,x-12*u,282*u);c.fill();
     c.strokeStyle='#9a9a92';c.lineWidth=.9*u;for(const k of [0,1,2]){c.beginPath();c.moveTo(x-4*u,(272+k*2.6)*u);c.lineTo(x+4*u,(272+k*2.6)*u);c.stroke()}}
   // belt
-  c.fillStyle='#1d1b19';c.beginPath();c.roundRect(cx-33*u,144*u,66*u,8*u,2*u);c.fill();const bk=c.createLinearGradient(0,144*u,0,152*u);bk.addColorStop(0,'#e6e8eb');bk.addColorStop(1,'#8d939a');c.fillStyle=bk;c.beginPath();c.roundRect(cx-5*u,144.5*u,10*u,7*u,1*u);c.fill();
-  // arms (behind the sleeves): smooth taper, elbow, hand with thumb
-  for(const sd of [-1,1]){const sx=cx+sd*35*u;
-    const ag=c.createLinearGradient(sx-8*u,0,sx+8*u,0);ag.addColorStop(0,shade(sk,sd<0?.02:-.22));ag.addColorStop(1,shade(sk,sd<0?-.15:-.32));c.fillStyle=ag;
-    c.beginPath();c.moveTo(sx-7*u,92*u);c.bezierCurveTo(sx-8*u,115*u,sx-5*u+sd*3*u,135*u,sx-4*u+sd*5*u,150*u);c.lineTo(sx+5*u+sd*5*u,150*u);c.bezierCurveTo(sx+6*u+sd*3*u,132*u,sx+8*u,112*u,sx+8*u,92*u);c.closePath();c.fill();
-    c.strokeStyle=shade(sk,-.28);c.lineWidth=.8*u;c.beginPath();c.moveTo(sx-3*u+sd*2*u,118*u);c.quadraticCurveTo(sx+sd*3*u,121*u,sx+4*u+sd*2*u,118*u);c.stroke();
-    const hx=sx+sd*5*u,hy=156*u;c.fillStyle=shade(sk,-.08);c.beginPath();c.ellipse(hx,hy,6.5*u,9*u,sd*.15,0,7);c.fill();
-    c.fillStyle=shade(sk,-.02);c.beginPath();c.ellipse(hx-sd*5*u,hy-3*u,2.4*u,5*u,-sd*.4,0,7);c.fill();
-    c.strokeStyle=shade(sk,-.3);c.lineWidth=.7*u;for(const k of [-2,0,2]){c.beginPath();c.moveTo(hx+k*u,hy+3*u);c.lineTo(hx+k*u,hy+8*u);c.stroke()}}
+  c.fillStyle='#1d1b19';c.beginPath();c.roundRect(cx-27.5*u,145*u,55*u,7*u,2*u);c.fill();const bk=c.createLinearGradient(0,144*u,0,152*u);bk.addColorStop(0,'#e6e8eb');bk.addColorStop(1,'#8d939a');c.fillStyle=bk;c.beginPath();c.roundRect(cx-5*u,145.3*u,10*u,6.4*u,1*u);c.fill();
+  // arms: start inside the sleeve, taper past the elbow to the hand at the hip
+  const W2=34*u,TOP=68*u,HH=80*u;
+  for(const sd of [-1,1]){const x0=cx+sd*W2*1.04,y0=TOP+HH*.34,x1=cx+sd*W2*1.0,y1=TOP+HH*1.08;
+    const ag=c.createLinearGradient(x0-sd*7*u,0,x0+sd*7*u,0);ag.addColorStop(0,shade(sk,-.05));ag.addColorStop(1,shade(sk,-.3));c.fillStyle=ag;
+    c.beginPath();c.moveTo(x0-6.5*u,y0);c.bezierCurveTo(x0-7*u,y0+22*u,x1-6*u,y1-18*u,x1-4.6*u,y1);c.quadraticCurveTo(x1,y1+2*u,x1+4.6*u,y1);
+    c.bezierCurveTo(x1+6*u,y1-18*u,x0+7*u,y0+22*u,x0+6.5*u,y0);c.closePath();c.fill();
+    c.strokeStyle=shade(sk,-.3);c.lineWidth=.8*u;c.beginPath();c.moveTo(x0-3*u,y0+36*u);c.quadraticCurveTo(x0,y0+38*u,x0+3*u,y0+36*u);c.stroke();
+    const hx=x1,hy=y1+6*u;c.fillStyle=shade(sk,-.06);c.beginPath();c.ellipse(hx,hy,5.6*u,8*u,0,0,7);c.fill();
+    c.fillStyle=shade(sk,-.01);c.beginPath();c.ellipse(hx-sd*4.6*u,hy-2.5*u,2.2*u,4.6*u,-sd*.35,0,7);c.fill();
+    c.strokeStyle=shade(sk,-.3);c.lineWidth=.6*u;for(const k of [-1.8,0,1.8]){c.beginPath();c.moveTo(hx+k*u,hy+3*u);c.lineTo(hx+k*u,hy+7*u);c.stroke()}}
   // neck then shirt then head, so everything joins up
   const R=17*u,hy=36*u;
-  drawNeck(c,cx,hy,R,74*u);
-  drawPolo(c,cx,68*u,31*u,80*u,u,true);
+  drawCollarBack(c,cx,68*u,34*u,80*u);drawNeck(c,cx,hy,R,74*u);
+  drawPolo(c,cx,68*u,34*u,80*u,u,true);
   drawHead(c,cx,hy,R);
 }
 function renderCard(){
