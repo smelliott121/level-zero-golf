@@ -13,6 +13,9 @@
 <link rel="icon" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/icon-180.png">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font-size:14px;overscroll-behavior:none}img{max-width:100%}[hidden]{display:none!important}</style>
+<!-- online accounts and leaderboard: fill in your Supabase project URL and anon (public) key -->
+<script>window.LZG_SUPABASE={url:'',key:''};</script>
+<script src="vendor/supabase.js" defer></script>
 </head>
 <body>
 <title>Level Zero Golf</title>
@@ -198,6 +201,8 @@ input[type=range]{width:100%;accent-color:var(--flag)}
 .troph{display:flex;flex-wrap:wrap;gap:5px}
 .troph span{font-size:11px;font-weight:600;padding:3px 8px;border-radius:999px;border:1px solid var(--line);color:var(--muted);opacity:.55}
 .troph span.got{border-color:var(--flag);color:var(--flag);opacity:1}
+.fld{display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--muted)}
+.fld input{height:44px;border-radius:8px;border:1px solid var(--line);background:var(--track);color:var(--ink);font:inherit;font-weight:600;padding:0 12px;-webkit-user-select:text;user-select:text;width:100%}
 .howto{margin:0;padding-left:18px;color:var(--muted);font-size:13px;line-height:1.45;display:flex;flex-direction:column;gap:4px}
 @media (prefers-reduced-motion:reduce){.toast,.meter .zone,.callout{transition:none}}
 </style>
@@ -240,6 +245,7 @@ input[type=range]{width:100%;accent-color:var(--flag)}
         <div class="sc" id="menuCard"></div>
         <h3>Equipment</h3>
         <div id="gearNow"></div>
+        <div id="acctBlock" hidden><h3>Account</h3><div class="gearnow" style="margin-top:6px"><div class="gi"><b id="acctName">Not signed in</b><small id="acctSub">Sign in to post rounds to the leaderboard and keep your progress on any phone.</small></div><button class="btn" id="acctBtn" style="height:40px;padding:0 14px">Sign in</button></div></div>
         <h3>Leaderboard</h3>
         <button class="btn" id="lbBtn">See the leaderboard</button>
         <h3>Practice area</h3>
@@ -255,6 +261,21 @@ input[type=range]{width:100%;accent-color:var(--flag)}
         <p class="sub" id="gearSub"></p>
         <div id="gearList" style="display:flex;flex-direction:column;gap:10px"></div>
         <button class="btn main" id="gearClose">Done</button>
+      </div>
+    </div>
+
+    <div class="sheet" id="acctSheet" hidden>
+      <div class="card">
+        <h2 style="font-size:32px" id="acctTitle">Sign in</h2>
+        <p class="sub" id="acctMsg">Use your email and a password. Your level, handicap and clubs follow you to any phone.</p>
+        <form id="acctForm" style="display:flex;flex-direction:column;gap:10px">
+          <label class="fld" for="acEmail">Email<input id="acEmail" type="email" autocomplete="email" required></label>
+          <label class="fld" for="acPass">Password<input id="acPass" type="password" autocomplete="current-password" minlength="6" required></label>
+          <label class="fld" for="acNick" id="acNickRow" hidden>Name on the leaderboard<input id="acNick" maxlength="16" autocomplete="nickname"></label>
+          <button class="btn main" id="acGo" type="submit">Sign in</button>
+        </form>
+        <button class="btn" id="acSwap">New here? Create an account</button>
+        <button class="btn" id="acClose">Not now</button>
       </div>
     </div>
 
@@ -815,7 +836,7 @@ function finishHole(A){
   if(last){const tot=R.scores.reduce((a,b)=>a+b,0);xp.push(['Round complete',25]);if(tot<=COURSE_PAR)xp.push(['Level par or better',50]);
     const b=brand();if(b){xp.push([`${b.name} round bonus`,b.round]);P.gear.left=Math.max(0,(P.gear.left||0)-1)}
     const co=COURSES[CUR],card={c:CUR,s:R.scores.slice(),par:COURSE.map(h=>h.par),si:co.si,sss:co.sss,date:today()};
-    const hadHc=P.hc.exact!=null,hcBefore=P.hc.exact,res=applyCard(card);
+    const hadHc=P.hc.exact!=null,hcBefore=P.hc.exact,res=applyCard(card);sbRound(card,hadHc?P.hc.last.stab:null);
     if(hadHc){const pts=P.hc.last.stab,hcp=Math.round(hcBefore);hcLine=` Stableford ${pts} pts · nett ${tot-Math.round(hcp/2)} · handicap ${fmtHc(hcBefore)} → ${fmtHc(P.hc.exact)}.`;
       if(P.stats.bestStab==null||pts>P.stats.bestStab)P.stats.bestStab=pts}
     else if(res.first){hcLine=` You now have a handicap: ${fmtHc(P.hc.exact)}.`;xp.push(['First handicap',50]);callout(`Handicap ${Math.round(P.hc.exact)}!`,'good')}
@@ -858,7 +879,7 @@ function finishChallenge(){
 }
 
 /* ---------- sheets ---------- */
-const SHEETS=['#endSheet','#menuSheet','#setSheet','#gearSheet','#lbSheet'];
+const SHEETS=['#endSheet','#menuSheet','#setSheet','#gearSheet','#lbSheet','#acctSheet'];
 const sheetOpen=()=>SHEETS.some(s=>!$(s).hidden);
 function closeSheets(){SHEETS.forEach(s=>$(s).hidden=true)}
 // hide the scoreboard and swing console whenever a menu or card is up
@@ -908,7 +929,7 @@ function openMenu(){
     mk('New round','',newRound)}
   else mk(!P.gear?'Pick your clubs to play':canStartRound()?'Play 9 holes':'18 holes played today','main',newRound);
   if(!canStartRound()&&!sameRound)rb.lastChild.disabled=true;
-  renderGearNow();
+  renderGearNow();renderAccount();
   $('#menuCard').innerHTML=inRound?scorecard(-1):'';$('#menuCard').hidden=!inRound;
   // practice
   const done=pracToday(),left=pracLeft(),midHole=G&&G.mode==='round'&&G.strokes>0&&G.state!=='done';
@@ -1013,11 +1034,71 @@ function renderCard(){
   box.appendChild(d);
 }
 
+/* ---------- accounts and online board through Supabase (only when window.LZG_SUPABASE is configured) ---------- */
+let SB=null,SBUSER=null,SBNICK='';
+async function sbInit(){
+  const cfg=window.LZG_SUPABASE;if(window.claude||!cfg||!cfg.url||!cfg.key)return;
+  if(!window.supabase&&document.readyState!=='complete')await new Promise(r=>addEventListener('load',r,{once:true}));
+  if(!window.supabase)return;
+  try{SB=window.supabase.createClient(cfg.url,cfg.key,{auth:{persistSession:true,autoRefreshToken:true}});
+    const {data}=await SB.auth.getSession();SBUSER=data.session?data.session.user:null;
+    SB.auth.onAuthStateChange((ev,ses)=>{const was=SBUSER&&SBUSER.id;SBUSER=ses?ses.user:null;if(SBUSER&&SBUSER.id!==was)sbPull();renderAccount()});
+    if(SBUSER)await sbPull();
+  }catch(e){SB=null}
+  renderAccount();
+}
+function renderAccount(){
+  const blk=$('#acctBlock');if(!blk)return;blk.hidden=!SB;if(!SB)return;
+  if(SBUSER){$('#acctName').textContent=SBNICK||AV.name||'Signed in';$('#acctSub').textContent=`Signed in as ${SBUSER.email}. Rounds post to the leaderboard automatically.`;$('#acctBtn').textContent='Sign out'}
+  else{$('#acctName').textContent='Not signed in';$('#acctSub').textContent='Sign in to post rounds to the leaderboard and keep your progress on any phone.';$('#acctBtn').textContent='Sign in'}
+}
+// adopt whichever copy of progress has played more: the phone's or the account's
+async function sbPull(){
+  if(!SB||!SBUSER)return;
+  try{const {data}=await SB.from('players').select('nick,save').eq('id',SBUSER.id).maybeSingle();
+    if(data){SBNICK=data.nick||'';const sv=data.save;
+      if(sv&&sv.P&&(sv.P.rounds||0)>(P.rounds||0)){Object.assign(P,sv.P);if(sv.AV)Object.assign(AV,sv.AV);save();saveAv();buildBall&&buildBall();updateLvl();toast('Progress restored from your account','good')}
+      else await sbSaveProfile()}
+    else await sbSaveProfile();
+  }catch(e){}
+  renderAccount();
+}
+async function sbSaveProfile(){
+  if(!SB||!SBUSER)return;const b=brand(),nick=(SBNICK||(AV.name!=='Player'?AV.name:'')||SBUSER.email.split('@')[0]).slice(0,16);
+  try{await SB.from('players').upsert({id:SBUSER.id,nick,level:P.lvl,handicap:P.hc.exact,rounds:P.rounds,brand:b?b.name:null,save:{P,AV},updated_at:new Date().toISOString()});SBNICK=nick}catch(e){}
+}
+async function sbRound(card,stab){
+  if(!SB||!SBUSER)return;
+  try{const {error}=await SB.from('rounds').insert({course:card.c,scores:card.s,gross:0,to_par:0,stableford:stab??null,handicap:P.hc.exact});
+    if(error)toast(/18 holes/.test(error.message)?'Round not posted: 18 holes a day.':'Round saved on this phone; posting to the board failed.','bad');else toast('Round posted to the leaderboard','good')}catch(e){}
+}
+let acMode='in';
+function openAccount(){closeSheets();acMode='in';syncAcct();$('#acctMsg').textContent='Use your email and a password. Your level, handicap and clubs follow you to any phone.';$('#acctSheet').hidden=false}
+function syncAcct(){const up=acMode==='up';$('#acctTitle').textContent=up?'Create account':'Sign in';$('#acGo').textContent=up?'Create account':'Sign in';
+  $('#acNickRow').hidden=!up;$('#acNick').required=up;$('#acPass').autocomplete=up?'new-password':'current-password';$('#acSwap').textContent=up?'Have an account? Sign in':'New here? Create an account';
+  if(up&&!$('#acNick').value&&AV.name!=='Player')$('#acNick').value=AV.name}
+$('#acSwap').onclick=()=>{acMode=acMode==='in'?'up':'in';syncAcct()};
+$('#acClose').onclick=()=>openMenu();
+$('#acctForm').addEventListener('submit',async e=>{
+  e.preventDefault();if(!SB)return;const email=$('#acEmail').value.trim(),password=$('#acPass').value,msg=$('#acctMsg'),go=$('#acGo');go.disabled=true;
+  try{
+    if(acMode==='up'){const nick=$('#acNick').value.trim().slice(0,16);if(!nick){msg.textContent='Pick a name for the leaderboard.';return}
+      const {data,error}=await SB.auth.signUp({email,password});if(error){msg.textContent=error.message;return}
+      SBNICK=nick;if(AV.name==='Player'){AV.name=nick;saveAv()}
+      if(!data.session){msg.textContent='Nearly there. Check your email for a confirmation link, then come back and sign in.';acMode='in';syncAcct();return}
+      SBUSER=data.session.user;await sbSaveProfile();
+    }else{const {data,error}=await SB.auth.signInWithPassword({email,password});if(error){msg.textContent=error.message==='Invalid login credentials'?'That email and password don\'t match an account.':error.message;return}SBUSER=data.user;await sbPull()}
+    toast('Signed in','good');openMenu();
+  }finally{go.disabled=false}
+});
+$('#acctBtn').onclick=async()=>{if(!SB)return;if(SBUSER){await SB.auth.signOut();SBUSER=null;SBNICK='';renderAccount();toast('Signed out','')}else openAccount()};
+
 /* ---------- leaderboard (shared through the artifact's database; each player writes only their own row) ---------- */
 let DB=null,USR=null,UID=null,lbUnsub=null,LB=[];
 (async()=>{try{if(!window.claude||!claude.use)return;USR=await claude.use('user');DB=await claude.use('db');UID=USR?await USR.id():null;if(!UID)DB=null}catch(e){DB=null}})();
 const hasBest=()=>Object.keys(P.bests).length>0;
 async function pushScore(){
+  sbSaveProfile();
   if(!DB||!UID||!hasBest())return;
   const b=brand(),c={};for(const k in P.bests)c[k]={toPar:P.bests[k].toPar,strokes:P.bests[k].strokes};
   try{await DB.doc('lb/'+UID).set({nick:(AV.name&&AV.name!=='Player'?AV.name:'').slice(0,16),c,lvl:P.lvl,hcp:P.hc.exact,rounds:P.rounds,brand:b?b.name:'',at:Date.now()})}catch(e){}
@@ -1030,6 +1111,7 @@ function renderLB(){
   body.appendChild(seg);
   const note=t=>{const p=document.createElement('p');p.className='sub';p.style.marginTop='12px';p.textContent=t;body.appendChild(p)};
   const mine=P.bests[lbCourse];
+  if(SB){renderSBBoard(body,note,mine);return}
   if(!DB){note(`The online leaderboard isn't switched on in this version yet. Your best here: ${mine?`${fmtPar(mine.toPar)} (${mine.strokes})`:'no round yet'}.`);return}
   const rows=LB.map(r=>{const v=r.d&&r.d.c&&r.d.c[lbCourse];return v&&Number.isFinite(Number(v.toPar))?{id:r.id,d:r.d,toPar:Number(v.toPar),strokes:Number(v.strokes)}:null}).filter(Boolean).sort((a,b)=>a.toPar-b.toPar||a.strokes-b.strokes);
   if(!rows.length){note('No rounds posted on this course yet. Finish 9 holes to put the first score on the board.');return}
@@ -1044,7 +1126,25 @@ function renderLB(){
   const need=rows.map(r=>r.id).filter(id=>!lbNames||!(id in lbNames));
   if(need.length&&USR&&USR.profiles)USR.profiles(need.slice(0,64)).then(n=>{lbNames={...(lbNames||{})};need.slice(0,64).forEach(id=>lbNames[id]=(n&&n[id])||{});if(!$('#lbSheet').hidden)renderLB()}).catch(()=>{});
 }
+let sbRows={},sbFetching=false;
+async function fetchSB(course){if(sbFetching)return;sbFetching=true;
+  try{const {data,error}=await SB.from('leaderboard').select('player_id,nick,handicap,level,brand,rounds,gross,to_par').eq('course',course).order('gross',{ascending:true}).limit(100);if(!error)sbRows[course]=data||[]}catch(e){}
+  sbFetching=false;if(!$('#lbSheet').hidden)renderLB()}
+function renderSBBoard(body,note,mine){
+  const rows=sbRows[lbCourse];
+  if(!rows){note('Loading the board…');fetchSB(lbCourse);return}
+  if(!SBUSER)note('Sign in from the menu to put your rounds on the board.');
+  if(!rows.length){note('No rounds posted on this course yet. Finish 9 holes while signed in to be first.');return}
+  const t=document.createElement('table');t.className='lbtab';t.style.marginTop='12px';t.innerHTML='<tr><th>#</th><th>Player</th><th class="r">Best</th><th class="r">Hcp</th></tr>';
+  rows.forEach((r,i)=>{const tr=document.createElement('tr');if(SBUSER&&r.player_id===SBUSER.id)tr.className='me';
+    tr.innerHTML='<td></td><td><span></span><small></small></td><td class="r"></td><td class="r"></td>';
+    tr.children[0].textContent=i+1;tr.querySelector('span').textContent=r.nick||'Golfer';
+    tr.querySelector('small').textContent=`Level ${r.level||0} · ${r.rounds||0} rounds${r.brand?' · '+r.brand:''}`;
+    tr.children[2].textContent=`${fmtPar(r.to_par)} (${r.gross})`;tr.children[3].textContent=r.handicap==null?'–':fmtHc(Number(r.handicap));t.appendChild(tr)});
+  body.appendChild(t);
+}
 function openLB(){
+  if(SB){closeSheets();lbCourse=CUR;sbRows={};$('#lbSheet').hidden=false;renderLB();return}
   closeSheets();lbCourse=CUR;$('#lbSheet').hidden=false;
   if(DB&&!lbUnsub){
     if(hasBest())pushScore();
@@ -1456,7 +1556,7 @@ function frame(now){
     bx.fillStyle='rgba(0,0,0,.3)';bx.beginPath();bx.ellipse(86,140,46,10,0,0,7);bx.fill();drawBall(bx,80,78,58,Math.sin(now/1400)*.5)}
   requestAnimationFrame(frame);
 }
-if(!R)useCourse(pickCourse);startHole(R?R.i:0);openMenu();requestAnimationFrame(frame);
+if(!R)useCourse(pickCourse);startHole(R?R.i:0);openMenu();requestAnimationFrame(frame);sbInit();
 })();
 </script>
 

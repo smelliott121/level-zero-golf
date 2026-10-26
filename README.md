@@ -27,6 +27,15 @@ It then opens full-screen from its own icon and works offline. Progress is saved
 2. **Source:** Deploy from a branch → `main` → `/ (root)` → Save.
 3. After a minute the game is live at `https://<your-username>.github.io/level-zero-golf/`.
 
+## Online accounts and leaderboard (Supabase)
+
+1. Create a free project at supabase.com (region: London).
+2. **SQL Editor → New query:** paste `supabase/schema.sql` and press Run. It creates the tables, the leaderboard and the security rules (players can only post their own rounds, two rounds a day).
+3. **Authentication → Sign In / Providers → Email:** optionally turn off *Confirm email* so friends can play straight away.
+4. **Project Settings → API:** copy the Project URL and the `anon` public key into the `window.LZG_SUPABASE` line near the top of `index.html`.
+
+The anon key is designed to be public; the security rules in `schema.sql` are what protect the data.
+
 ## Updating
 
 Edit `index.html`, then bump `VERSION` in `sw.js` (e.g. `lzg-v2`) so installed copies pick up the change on next open.
@@ -42,5 +51,4 @@ Edit `index.html`, then bump `VERSION` in `sw.js` (e.g. `lzg-v2`) so installed c
 
 ## Not yet
 
-- **Online leaderboard with accounts:** the leaderboard currently shows your own bests. The plan is to connect a free Supabase project for sign-up and a shared board.
 - **Majors and tours:** club contracts already run for a 3-round season as a stand-in.
