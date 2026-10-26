@@ -414,16 +414,16 @@ const LINKS=[
 const BAY=[
   {name:'The Lane',par:4,cl:[V(0,0),V(4,180),V(24,332)],fw:[V(2,45),V(4,180),V(23,325)],fwW:15,
    green:E(26,347,12,14),pin:V(28,350),bunkers:[E(39,336,3.5,4.5),E(34,329,3,3.5),E(-13,205,5,7),E(-9,262,4,5)],water:[],
-   clumps:[[-14,300,9],[30,280,8],[34,300,7]],tilt:V(-.01,.02),bumps:[[-5,6,.18,5]],treeD:34,obD:60,obR:36},
+   clumps:[[-14,300,9],[30,280,8],[34,300,7],[-26,214,9],[-22,236,7]],hills:[[-24,214,26,-5]],elev:-12,tilt:V(-.01,.02),bumps:[[-5,6,.18,5]],treeD:34,obD:60,obR:36},
   {name:'Gorse Run',par:4,cl:[V(0,0),V(8,200),V(23,305)],fw:[V(2,45),V(8,200),V(21,298)],fwW:14,
    green:E(25,318,11,13),pin:V(26,321),bunkers:[E(22,214,4,5),E(9,268,3.5,4.5),E(13,318,3,5),E(37,316,3,5)],water:[],
-   clumps:[[-18,120,9],[-14,160,8],[-2,250,6]],tilt:V(.012,.022),bumps:[[4,5,.16,4]],treeD:30,obD:56,obL:44},
+   clumps:[[-18,120,9],[-14,160,8],[-2,250,6]],hills:[[36,205,34,-9],[44,170,22,-4]],elev:-10,tilt:V(.012,.022),bumps:[[4,5,.16,4]],treeD:30,obD:56,obL:44},
   {name:'Clubhouse',par:4,cl:[V(0,0),V(10,150),V(30,255)],fw:[V(4,40),V(10,150),V(28,250)],fwW:13,
    green:E(32,268,11,12),pin:V(34,271),bunkers:[E(22,261,4,5),E(45,266,3,4)],water:[],
    clumps:[[30,120,8],[38,170,8],[46,215,8]],tilt:V(-.015,.018),bumps:[[-4,-4,.14,4]],treeD:30,obD:56,obL:28},
   {name:'The Valley',par:3,cl:[V(0,0),V(12,180)],fw:[V(5,80),V(9,128)],fwW:17,
    green:E(14,188,13,12),pin:V(16,192),bunkers:[E(3,180,4,4),E(26,181,4,4)],water:[],
-   clumps:[[-14,150,8],[32,140,8]],tilt:V(.01,-.02),bumps:[[5,4,.2,4]],treeD:26,obD:50},
+   clumps:[[-14,150,8],[32,140,8]],hills:[[8,110,70,-7]],elev:-3,tilt:V(.01,-.02),bumps:[[5,4,.2,4]],treeD:26,obD:50},
   {name:'Long Walk',par:4,cl:[V(0,0),V(15,200),V(35,385)],fw:[V(3,45),V(15,200),V(34,378)],fwW:15,
    green:E(36,398,11,15),pin:V(37,402),bunkers:[E(-6,150,4,5),E(-3,170,3.5,4),E(26,394,3,4)],water:[],
    clumps:[[-10,110,8],[29,140,6],[-6,240,7]],tilt:V(.01,.022),bumps:[[-4,6,.15,4],[5,-6,-.12,4]],treeD:30,obD:56},
@@ -438,9 +438,9 @@ const BAY=[
    clumps:[[-6,175,6],[30,110,6]],tilt:V(.012,.02),bumps:[[4,5,.16,4]],treeD:30,obD:58,obR:42},
   {name:'Over the Wood',par:3,cl:[V(0,0),V(14,183)],fw:[V(10,150),V(13,170)],fwW:9,
    green:E(16,191,12,15),pin:V(18,195),bunkers:[E(30,191,4,6),E(6,207,3,5)],water:[],
-   clumps:[[2,90,13],[-8,122,10],[-14,60,9]],tilt:V(.01,.02),bumps:[[-4,5,.18,5]],treeD:28,obD:52}];
-const COURSES={links:{id:'links',name:'Level Zero Links',blurb:'Lakes, an island green and a long par 5.',holes:LINKS},
-  bay:{id:'bay',name:'Bayview Heath',blurb:'Tight, tree-lined heathland nine on the Jersey clifftops.',holes:BAY,wind:[5,22]}};
+   clumps:[[-16,150,8],[34,150,7]],obZones:[E(7,96,34,50)],elev:-14,tilt:V(.01,.02),bumps:[[-4,5,.18,5]],treeD:28,obD:52}];
+const COURSES={links:{id:'links',name:'Level Zero Links',blurb:'Lakes, an island green and a long par 5.',holes:LINKS,wind:[2,15]},
+  bay:{id:'bay',name:'Bayview Heath',blurb:'Tight, tree-lined heathland nine on the Jersey clifftops. Hilly, with a gorge on the 9th.',holes:BAY,wind:[4,16]}};
 let CUR='links',COURSE=LINKS,COURSE_PAR=0;
 function useCourse(id){CUR=COURSES[id]?id:'links';COURSE=COURSES[CUR].holes;COURSE_PAR=COURSE.reduce((a,h)=>a+h.par,0)}
 useCourse('links');
@@ -486,6 +486,7 @@ function lieAt(p){
   if(inE(p,H.green))return'green';
   if(H.bunkers.some(e=>inE(p,e)))return'bunker';
   if(inE(p,H.green,1.3))return'fringe';
+  if((H.obZones||[]).some(e=>inE(p,e)))return'ob';
   if(H.water.some(e=>inE(p,e)))return'water';
   if((H.clumps||[]).some(([x,y,r])=>Math.hypot(p.x-x,p.y-y)<=r))return'trees';
   if(H.fw.length>1&&dPoly(p,H.fw)<=H.fwW)return'fairway';
@@ -496,6 +497,9 @@ function lieAt(p){
 // distance past the out-of-bounds line (positive = OB); the line can sit closer on one side
 function obGap(p,h=H){let m=1e9,side=1;for(let i=0;i<h.cl.length-1;i++){const a=h.cl[i],b=h.cl[i+1],d=segDist(p,a,b);if(d<m){m=d;side=((b.x-a.x)*(p.y-a.y)-(b.y-a.y)*(p.x-a.x))<0?1:-1}}
   return m-(side>0?(h.obR??h.obD):(h.obL??h.obD))}
+// ground height in yards: elev is the drop or rise from tee to green (negative = downhill), hills are [x,y,size,height] mounds and dips
+function terrain(p,h=H){let z=(h.elev||0)*clamp(p.y/Math.max(1,h.pin.y),0,1.1);for(const [x,y,r,a] of h.hills||[])z+=a*Math.exp(-((p.x-x)**2+(p.y-y)**2)/(2*(r/2)**2));return z}
+function tgrad(p){const e=.5;return{x:(terrain({x:p.x+e,y:p.y})-terrain({x:p.x-e,y:p.y}))/(2*e),y:(terrain({x:p.x,y:p.y+e})-terrain({x:p.x,y:p.y-e}))/(2*e)}}
 function gH(x,y,h=H){const g=h.green,dx=x-g.x,dy=y-g.y;let z=h.tilt.x*dx+h.tilt.y*dy;for(const [bx,by,a,s] of h.bumps)z+=a*Math.exp(-((dx-bx)**2+(dy-by)**2)/(2*s*s));return z}
 function grad(p){const e=.1;return{x:(gH(p.x+e,p.y)-gH(p.x-e,p.y))/(2*e),y:(gH(p.x,p.y+e)-gH(p.x,p.y-e))/(2*e)}}
 function contour(f,x0,y0,nx,ny,st,L,out){
@@ -511,16 +515,21 @@ function contour(f,x0,y0,nx,ny,st,L,out){
 function prep(h,seed){
   if(h._ok)return;h._ok=true;
   h.bunkers.forEach((e,i)=>wobble(e,seed*31+i,.13));h.water.forEach((e,i)=>wobble(e,seed*47+i,.1));wobble(h.green,seed*13,.045);
+  (h.obZones||[]).forEach((e,i)=>wobble(e,seed*59+i,.12));
+  // keep sand off the putting surface: nudge any bunker that clips the green out to its edge
+  h.bunkers.forEach(b=>{for(let k=0;k<60;k++){let hit=false;for(let i=0;i<32&&!hit;i++){const th=i/32*Math.PI*2,kk=kAt(b,th);hit=inE({x:b.x+Math.cos(th)*b.rx*kk,y:b.y+Math.sin(th)*b.ry*kk},h.green,1.06)}
+    if(!hit)break;const dx=b.x-h.green.x,dy=b.y-h.green.y,L=Math.hypot(dx,dy)||1;b.x+=dx/L*.4;b.y+=dy/L*.4}});
   const last=h.cl[h.cl.length-1];let len=0;for(let i=0;i<h.cl.length-1;i++)len+=dist(h.cl[i],h.cl[i+1]);h.yds=Math.round((len+dist(last,h.pin))/5)*5;
   let x0=Infinity,x1=-Infinity,y0=Infinity,y1=-Infinity;for(const p of [...h.cl,h.pin]){x0=Math.min(x0,p.x);x1=Math.max(x1,p.x);y0=Math.min(y0,p.y);y1=Math.max(y1,p.y)}
   const pad=h.obD+14;x0-=pad;x1+=pad;y0-=pad;y1+=pad;
   // trees
   h._trees=[];let a=seed*9973+7;const r=()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
   for(let x=x0;x<=x1;x+=10)for(let y=y0;y<=y1;y+=10){const p={x:x+r()*8,y:y+r()*8},d=dCL(p,h);
-    if(d>h.treeD+5&&Math.hypot(p.x,p.y)>14&&!inE(p,h.green,2.4)&&!h.water.some(e=>inE(p,e,1.3))&&!h.bunkers.some(e=>inE(p,e,1.6))&&r()<.85)h._trees.push({...p,r:(d<h.treeD+12?4:5)+r()*4})}
+    if(d>h.treeD+5&&Math.hypot(p.x,p.y)>14&&!inE(p,h.green,2.4)&&!h.water.some(e=>inE(p,e,1.3))&&!h.bunkers.some(e=>inE(p,e,1.6))&&!(h.obZones||[]).some(e=>inE(p,e,1.1))&&r()<.85)h._trees.push({...p,r:(d<h.treeD+12?4:5)+r()*4})}
   for(const [cx,cy,cr] of h.clumps||[])for(let x=cx-cr;x<=cx+cr;x+=5.5)for(let y=cy-cr;y<=cy+cr;y+=5.5){const p={x:x+r()*3,y:y+r()*3};if(Math.hypot(p.x-cx,p.y-cy)<=cr*.85)h._trees.push({...p,r:3.5+r()*2.5})}
   // out-of-bounds line
   h._ob=[];const st=3;contour((x,y)=>obGap({x,y},h),x0,y0,Math.ceil((x1-x0)/st),Math.ceil((y1-y0)/st),st,[0],h._ob);
+  h._terr=[];if(h.elev||h.hills){const L=[];for(let z=-30;z<=30;z+=1.5)L.push(z+.01);contour((x,y)=>terrain({x,y},h),x0,y0,Math.ceil((x1-x0)/4),Math.ceil((y1-y0)/4),4,L,h._terr)}
   // green contours and downhill arrows
   h._cont=[];const g=h.green,gs=.5,gx=g.x-g.rx*1.05,gy=g.y-g.ry*1.05,gnx=Math.ceil(g.rx*2.1/gs),gny=Math.ceil(g.ry*2.1/gs);
   let mn=Infinity,mx=-Infinity;for(let j=0;j<=gny;j++)for(let i=0;i<=gnx;i++){const z=gH(gx+i*gs,gy+j*gs,h);mn=Math.min(mn,z);mx=Math.max(mx,z)}
@@ -554,7 +563,8 @@ function autoClub(){
   return pick;
 }
 const minWant=()=>G.club==='Putter'?.3:G.club==='Pitch'?3:15;
-const defWant=()=>G.club==='Putter'?remaining():Math.min(remaining(),clubMax(G.club));
+const playsDz=()=>terrain(H.pin)-terrain(G.ball); // + = uphill to the pin
+const defWant=()=>G.club==='Putter'?remaining():clamp(remaining()+(G.lie==='green'||G.lie==='fringe'?0:playsDz()),minWant(),clubMax(G.club));
 const zoneHalf=()=>G.club==='Putter'?lerp(.05,.17,(mix('accuracy')+mix('putting'))/2):lerp(.035,.12,mix('accuracy'));
 function zoneC(){let w=G.want;if(G.club==='Putter')w*=1+puttLine().along*KP;return clamp(w/(clubMax(G.club)*OVER),.04,.97)}
 function setDefaults(){
@@ -600,7 +610,7 @@ function startHole(i){
   const wr=COURSES[CUR].wind||[3,20];
   G=freshG('round',{spd:Math.round(rand(wr[0],wr[1])),dir:rand(0,360)});
   G.club=autoClub();cam=null;newRead();setDefaults();updateUI();
-  toast(`Hole ${i+1} · ${H.name} · Par ${H.par} · Wind ${G.wind.spd} mph`,'');
+  toast(`Hole ${i+1} · ${H.name} · Par ${H.par}${H.elev<=-6?' · Downhill':H.elev>=6?' · Uphill':''} · Wind ${G.wind.spd} mph`,'');
 }
 function startChallenge(key){
   H=PRACTICE[key];prep(H,100+PKEYS.indexOf(key));
@@ -616,7 +626,8 @@ function placeBall(s){
 }
 function newRead(){G.readF=1+gauss()*lerp(.55,.08,mix('putting'))}
 const heading=()=>Math.atan2(H.pin.x-G.ball.x,H.pin.y-G.ball.y)+G.aim*D2R;
-function preview(){const h=heading();return{land:{x:G.ball.x+Math.sin(h)*G.want,y:G.ball.y+Math.cos(h)*G.want},d:G.want}}
+function preview(){const h=heading();let c=G.want;if(G.club!=='Putter'){const z0=terrain(G.ball);for(let k=0;k<2;k++)c=Math.max(1,G.want-(terrain({x:G.ball.x+Math.sin(h)*c,y:G.ball.y+Math.cos(h)*c})-z0)*.9)}
+  return{land:{x:G.ball.x+Math.sin(h)*c,y:G.ball.y+Math.cos(h)*c},d:c}}
 
 function tap(){
   if(!G||sheetOpen())return;
@@ -651,8 +662,9 @@ function doShot(p){
   const dir={x:Math.sin(h),y:Math.cos(h)},rp={x:Math.cos(h),y:-Math.sin(h)};
   const wv=windVec(true),wa=wv.x*dir.x+wv.y*dir.y,wc=wv.x*rp.x+wv.y*rp.y;
   const wf=stuck?0:(isPitch?.5:1)*(low?.6:1);
-  const carry=d*(isPitch?.78:1)*(1+wa*.008*wf);
-  const drift=wc*carry*.005*wf;
+  let carry=d*(isPitch?.78:1)*(1+wa*.006*wf);
+  const drift=wc*carry*.0038*wf;
+  {const z0=terrain(from),f=stuck?0:1;for(let k=0;k<2;k++){const pt={x:from.x+dir.x*carry,y:from.y+dir.y*carry};carry=Math.max(1,d*(isPitch?.78:1)*(1+wa*.006*wf)-(terrain(pt)-z0)*.9*f)}}
   const land={x:from.x+dir.x*carry+rp.x*drift,y:from.y+dir.y*carry+rp.y*drift};
   const landLie=lieAt(land);
   let rollD=0;
@@ -662,7 +674,10 @@ function doShot(p){
     if(landLie==='bunker'||landLie==='water'||landLie==='ob')rollD=0;
   }
   let end={...land},dmin=dist(land,H.pin);
-  if(rollD>0){const n=Math.ceil(rollD/.25);for(let i=1;i<=n;i++){const q={x:land.x+dir.x*rollD*i/n,y:land.y+dir.y*rollD*i/n};end=q;dmin=Math.min(dmin,dist(q,H.pin));const l=lieAt(q);if(l==='water'||l==='bunker'||l==='trees'||l==='ob')break}}
+  if(rollD>0){const g0=tgrad(land);rollD*=clamp(1-(g0.x*dir.x+g0.y*dir.y)*9,.3,2.6); // rolls on downhill, checks up a slope
+    let q={...land},vd={...dir};const n=Math.ceil(rollD/.25);
+    for(let i=1;i<=n;i++){const g=tgrad(q),m=Math.hypot(g.x,g.y),k=clamp(m*14,0,1.6);if(m>1e-4){vd={x:vd.x-g.x/m*k*.12,y:vd.y-g.y/m*k*.12};const L=Math.hypot(vd.x,vd.y)||1;vd={x:vd.x/L,y:vd.y/L}}
+      q={x:q.x+vd.x*.25,y:q.y+vd.y*.25};end=q;dmin=Math.min(dmin,dist(q,H.pin));const l=lieAt(q);if(l==='water'||l==='bunker'||l==='trees'||l==='ob')break}}
   let holed=false;
   if(!H.noCup&&!stuck&&lieAt(end)!=='water'){const hp=dmin<.2?.85:dmin<1.4?(1.4-dmin)/1.4*(isPitch?.3:.15):0;if(Math.random()<hp){holed=true;end={...H.pin}}}
   if(big)callout(big,'bad');
@@ -943,7 +958,7 @@ function updateUI(){
   }
   const lc=$('#lie');lc.textContent=LIE[G.lie];lc.className='chip '+G.lie;
   const rem=remaining(),putt=G.club==='Putter';
-  $('#rem').textContent=(putt||G.lie==='green')?`${Math.max(1,Math.round(rem*3))} ft to pin`:`${Math.round(rem)} yds to ${H.noCup?'flag':'pin'}`;
+  $('#rem').textContent=(putt||G.lie==='green')?`${Math.max(1,Math.round(rem*3))} ft to pin`:(Math.abs(playsDz())>=2?`${Math.round(rem)} yds · plays ${Math.round(rem+playsDz())}`:`${Math.round(rem)} yds to ${H.noCup?'flag':'pin'}`);
   $('#club').textContent=G.club;
   $('#want').textContent=putt?`${Math.max(1,Math.round(G.want*3))} ft`:`${Math.round(G.want)} yds`;
   $('#wantLab').textContent=putt?'Pace':'Hit it';
@@ -1144,6 +1159,20 @@ function draw(now){
   }
   if(!H.noTee){const t0=S({x:-5,y:3.5}),t1=S({x:5,y:-3.5});ctx.fillStyle=pat('fw');ctx.fillRect(t0.x,t0.y,t1.x-t0.x,t1.y-t0.y);
     ctx.fillStyle='#f4f1e8';for(const tx of [-3,3]){const m=S({x:tx,y:2});ctx.beginPath();ctx.arc(m.x,m.y,Math.max(1.5,.35*s),0,7);ctx.fill()}}
+  // ground shape: soft hillshade on mounds and dips, faint height lines
+  for(const [x,y,r,a] of H.hills||[]){const c=S({x,y}),R=r*s*.9,g=ctx.createRadialGradient(c.x-(a>0?R*.25:-R*.2),c.y-(a>0?R*.25:-R*.2),0,c.x,c.y,R);
+    if(a>0){g.addColorStop(0,'rgba(255,255,220,.13)');g.addColorStop(1,'rgba(255,255,220,0)')}else{g.addColorStop(0,'rgba(0,18,0,.26)');g.addColorStop(1,'rgba(0,18,0,0)')}
+    ctx.fillStyle=g;ctx.beginPath();ctx.arc(c.x,c.y,R,0,7);ctx.fill()}
+  if(H._terr&&H._terr.length){segPath(H._terr);ctx.strokeStyle='rgba(10,30,8,.16)';ctx.lineWidth=1;ctx.stroke()}
+  // the gorge: dense gorse and scrub falling away, staked out of bounds
+  (H.obZones||[]).forEach((e,zi)=>{
+    shapePath(e,1.04);ctx.fillStyle='rgba(20,30,12,.6)';ctx.fill();
+    shapePath(e);ctx.fillStyle='#2b3b1f';ctx.fill();
+    ctx.save();shapePath(e);ctx.clip();const c=S(e),g=ctx.createRadialGradient(c.x,c.y,0,c.x,c.y,Math.max(e.rx,e.ry)*s);g.addColorStop(0,'rgba(8,14,4,.55)');g.addColorStop(1,'rgba(8,14,4,0)');ctx.fillStyle=g;ctx.fillRect(0,0,W,Hc);
+      let sd=31+zi;const rr=()=>{sd=(sd*16807)%2147483647;return sd/2147483647};
+      for(let i=0;i<260;i++){const p=S({x:e.x+(rr()*2-1)*e.rx,y:e.y+(rr()*2-1)*e.ry});ctx.fillStyle=i%5?'rgba(70,95,40,.55)':'rgba(214,180,40,.75)';ctx.beginPath();ctx.arc(p.x,p.y,Math.max(1,(i%5?1.4:.7)*s*(.6+rr())),0,7);ctx.fill()}
+    ctx.restore();
+    ctx.fillStyle='#fff';for(let i=0;i<36;i++){const th=i/36*Math.PI*2,kk=kAt(e,th),q=S({x:e.x+Math.cos(th)*e.rx*kk,y:e.y+Math.sin(th)*e.ry*kk});ctx.beginPath();ctx.arc(q.x,q.y,Math.max(1.4,.4*s),0,7);ctx.fill()}});
   // water: muddy bank, depth gradient, glints
   H.water.forEach(e=>{
     shapePath(e,1.06);ctx.fillStyle='rgba(70,82,48,.55)';ctx.fill();
@@ -1220,7 +1249,7 @@ function draw(now){
     ctx.restore();
     if(G.club!=='Putter'){const rr=Math.max(2,pv.d*lerp(.12,.04,mix(catFor(G.club))))*cam.s;
       ctx.beginPath();ctx.arc(l.x,l.y,rr,0,7);ctx.fillStyle='rgba(255,255,255,.12)';ctx.fill();ctx.strokeStyle='rgba(255,255,255,.85)';ctx.lineWidth=1.5;ctx.stroke();ctx.font='600 12px Barlow, system-ui, sans-serif';ctx.fillStyle='#fff';ctx.textAlign='left';ctx.textBaseline='middle';
-      const lab=`${Math.round(pv.d)} yds · ${LIE[lieAt(pv.land)]}`,tx=l.x+rr+6;ctx.fillText(lab,tx>W-100?l.x-rr-ctx.measureText(lab).width-6:tx,l.y)}
+      const dzp=terrain(pv.land)-terrain(G.ball),lab=`${Math.round(pv.d)} yds${Math.abs(dzp)>=2?` (${dzp<0?'↓':'↑'}${Math.round(Math.abs(dzp))})`:''} · ${LIE[lieAt(pv.land)]}`,tx=l.x+rr+6;ctx.fillText(lab,tx>W-100?l.x-rr-ctx.measureText(lab).width-6:tx,l.y)}
   }
   const bp=ballPos(now);
   if(G.anim&&G.anim.type==='shot'&&bp.h>0)G.trail.push({...bp.p,h:bp.h});
