@@ -1148,8 +1148,8 @@ function drawPolo(c,cx,top,w,h,u,withLogo){
     c.bezierCurveTo(cx-w*.6,top+h*.0,cx-w*.94,top+h*.03,cx-w*1.06,top+h*.13);          // shoulder line
     c.bezierCurveTo(cx-w*1.16,top+h*.22,cx-w*1.22,top+h*.36,cx-w*1.22,top+h*.46);      // sleeve cap
     c.quadraticCurveTo(cx-w*1.04,top+h*.5,cx-w*.86,top+h*.49);                          // sleeve hem
-    c.quadraticCurveTo(cx-w*.9,top+h*.74,cx-w*.8,top+h*.95);                            // side, tapering to the waist
-    c.quadraticCurveTo(cx-w*.4,top+h*1.03,cx,top+h*1.02);c.quadraticCurveTo(cx+w*.4,top+h*1.03,cx+w*.8,top+h*.95);
+    c.quadraticCurveTo(cx-w*.9,top+h*.74,cx-w*.82,top+h*1.0);                           // side, tapering to the waist
+    c.lineTo(cx+w*.82,top+h*1.0);
     c.quadraticCurveTo(cx+w*.9,top+h*.74,cx+w*.86,top+h*.49);
     c.quadraticCurveTo(cx+w*1.04,top+h*.5,cx+w*1.22,top+h*.46);
     c.bezierCurveTo(cx+w*1.22,top+h*.36,cx+w*1.16,top+h*.22,cx+w*1.06,top+h*.13);
@@ -1165,18 +1165,20 @@ function drawPolo(c,cx,top,w,h,u,withLogo){
   c.restore();
   c.strokeStyle=shade(sh,-.38);c.lineWidth=1*u;for(const sd of [-1,1]){c.beginPath();c.moveTo(cx+sd*w*1.2,top+h*.43);c.quadraticCurveTo(cx+sd*w*1.04,top+h*.47,cx+sd*w*.87,top+h*.46);c.stroke()}
   // placket and buttons
-  c.fillStyle=shade(sh,-.05);c.beginPath();c.roundRect(cx-w*.055,top+h*.12,w*.11,h*.3,w*.03);c.fill();
+  c.fillStyle=shade(sh,-.05);c.beginPath();c.roundRect(cx-w*.055,top+h*.15,w*.11,h*.28,w*.03);c.fill();
   c.strokeStyle=shade(sh,-.36);c.lineWidth=.9*u;c.stroke();
-  c.fillStyle=shade(sh,.38);for(const k of [.24,.34]){c.beginPath();c.arc(cx,top+h*k,Math.max(1.2*u,w*.022),0,7);c.fill()}
-  // collar: stand rising round the neck, then the two points folding down onto the shirt, casting a soft shadow
+  c.fillStyle=shade(sh,.38);for(const k of [.25,.35]){c.beginPath();c.arc(cx,top+h*k,Math.max(1.2*u,w*.022),0,7);c.fill()}
+  // collar: each point starts at the side of the neck, runs out and down, and stops short of the placket
   for(const sd of [-1,1]){
-    c.fillStyle=shade(sh,-.12);c.beginPath();c.moveTo(cx+sd*w*.3,top+h*.02);c.quadraticCurveTo(cx+sd*w*.31,top-h*.05,cx+sd*w*.24,top-h*.07);c.quadraticCurveTo(cx+sd*w*.2,top,cx+sd*w*.14,top+h*.08);c.closePath();c.fill();
-    const wing=()=>{c.beginPath();c.moveTo(cx+sd*w*.25,top-h*.05);c.bezierCurveTo(cx+sd*w*.34,top-h*.01,cx+sd*w*.44,top+h*.08,cx+sd*w*.46,top+h*.17);
-      c.quadraticCurveTo(cx+sd*w*.24,top+h*.17,cx+sd*w*.02,top+h*.14);c.quadraticCurveTo(cx+sd*w*.12,top+h*.06,cx+sd*w*.25,top-h*.05);c.closePath()};
-    c.save();c.shadowColor='rgba(0,0,0,.35)';c.shadowBlur=3*u;c.shadowOffsetY=1.5*u;wing();
-    const wg=c.createLinearGradient(cx+sd*w*.1,top,cx+sd*w*.45,top+h*.17);wg.addColorStop(0,shade(sh,.06));wg.addColorStop(1,shade(sh,-.1));c.fillStyle=wg;c.fill();c.restore();
-    wing();c.strokeStyle=shade(sh,-.32);c.lineWidth=.9*u;c.stroke();
-    c.strokeStyle='rgba(255,255,255,.18)';c.lineWidth=.8*u;c.beginPath();c.moveTo(cx+sd*w*.27,top-h*.02);c.bezierCurveTo(cx+sd*w*.35,top+h*.02,cx+sd*w*.41,top+h*.09,cx+sd*w*.42,top+h*.15);c.stroke()}
+    const wing=()=>{c.beginPath();c.moveTo(cx+sd*w*.3,top-h*.045);
+      c.bezierCurveTo(cx+sd*w*.36,top+h*.02,cx+sd*w*.43,top+h*.11,cx+sd*w*.46,top+h*.2);
+      c.quadraticCurveTo(cx+sd*w*.3,top+h*.2,cx+sd*w*.11,top+h*.16);
+      c.quadraticCurveTo(cx+sd*w*.17,top+h*.07,cx+sd*w*.22,top+h*.0);
+      c.quadraticCurveTo(cx+sd*w*.25,top-h*.035,cx+sd*w*.3,top-h*.045);c.closePath()};
+    c.save();c.shadowColor='rgba(0,0,0,.32)';c.shadowBlur=3*u;c.shadowOffsetY=1.4*u;wing();
+    const wg=c.createLinearGradient(cx+sd*w*.15,top,cx+sd*w*.45,top+h*.2);wg.addColorStop(0,shade(sh,.08));wg.addColorStop(1,shade(sh,-.08));c.fillStyle=wg;c.fill();c.restore();
+    wing();c.strokeStyle=shade(sh,-.3);c.lineWidth=.8*u;c.stroke();
+    c.strokeStyle='rgba(255,255,255,.16)';c.lineWidth=.7*u;c.beginPath();c.moveTo(cx+sd*w*.31,top-h*.01);c.bezierCurveTo(cx+sd*w*.36,top+h*.04,cx+sd*w*.41,top+h*.11,cx+sd*w*.43,top+h*.18);c.stroke()}
   if(withLogo){c.save();c.shadowColor='rgba(0,0,0,.4)';c.shadowBlur=1.5*u;c.shadowOffsetY=.5*u;drawLogo(c,cx-w*.5,top+h*.32,w*.025,false);c.restore()}
 }
 // head-and-shoulders for the handicap card
@@ -1194,9 +1196,13 @@ function drawPortrait(c,W_,H_){
   c.clearRect(0,0,W_,H_);c.lineCap='round';c.lineJoin='round';
   c.fillStyle='rgba(0,0,0,.4)';c.beginPath();c.ellipse(cx,287*u,62*u,6*u,0,0,7);c.fill();
   // legs
+  {const pg=c.createLinearGradient(cx-28*u,0,cx+28*u,0);pg.addColorStop(0,shade(tr,-.14));pg.addColorStop(.45,shade(tr,.08));pg.addColorStop(1,shade(tr,-.3));c.fillStyle=pg;
+    c.beginPath();c.moveTo(cx-27.5*u,147*u);c.lineTo(cx+27.5*u,147*u);c.quadraticCurveTo(cx+28.5*u,165*u,cx+27.5*u,182*u);c.lineTo(cx+2*u,186*u);c.quadraticCurveTo(cx,189*u,cx-2*u,186*u);c.lineTo(cx-27.5*u,182*u);c.quadraticCurveTo(cx-28.5*u,165*u,cx-27.5*u,147*u);c.closePath();c.fill();
+    c.strokeStyle='rgba(0,0,0,.18)';c.lineWidth=.9*u;c.beginPath();c.moveTo(cx,152*u);c.quadraticCurveTo(cx+.5*u,172*u,cx,186*u);c.stroke();
+    for(const sd of [-1,1]){c.beginPath();c.moveTo(cx+sd*22*u,152*u);c.quadraticCurveTo(cx+sd*17*u,158*u,cx+sd*12*u,159*u);c.stroke()}}
   for(const sd of [-1,1]){const x=cx+sd*13.5*u;
     const tg=c.createLinearGradient(x-14*u,0,x+14*u,0);tg.addColorStop(0,shade(tr,sd<0?-.12:-.3));tg.addColorStop(.5,shade(tr,sd<0?.1:-.05));tg.addColorStop(1,shade(tr,sd<0?-.18:-.38));
-    c.fillStyle=tg;c.beginPath();c.moveTo(x-14*u,148*u);c.lineTo(x+14*u,148*u);c.quadraticCurveTo(x+13*u,215*u,x+11*u,272*u);c.quadraticCurveTo(x,277*u,x-11*u,272*u);c.quadraticCurveTo(x-13*u,215*u,x-14*u,148*u);c.closePath();c.fill();
+    c.fillStyle=tg;c.beginPath();c.moveTo(x-14*u,170*u);c.lineTo(x+14*u,170*u);c.quadraticCurveTo(x+13*u,220*u,x+11*u,272*u);c.quadraticCurveTo(x,277*u,x-11*u,272*u);c.quadraticCurveTo(x-13*u,220*u,x-14*u,170*u);c.closePath();c.fill();
     c.strokeStyle='rgba(0,0,0,.16)';c.lineWidth=1*u;c.beginPath();c.moveTo(x-4*u,212*u);c.quadraticCurveTo(x,216*u,x+5*u,212*u);c.moveTo(x-6*u,268*u);c.quadraticCurveTo(x,264*u,x+6*u,268*u);c.stroke()}
   // shoes
   for(const sd of [-1,1]){const x=cx+sd*16*u;c.fillStyle='#2a2a2a';c.beginPath();c.ellipse(x+sd*2*u,284*u,15*u,4*u,0,0,7);c.fill();
@@ -1207,16 +1213,16 @@ function drawPortrait(c,W_,H_){
   c.fillStyle='#1d1b19';c.beginPath();c.roundRect(cx-27.5*u,145*u,55*u,7*u,2*u);c.fill();const bk=c.createLinearGradient(0,144*u,0,152*u);bk.addColorStop(0,'#e6e8eb');bk.addColorStop(1,'#8d939a');c.fillStyle=bk;c.beginPath();c.roundRect(cx-5*u,145.3*u,10*u,6.4*u,1*u);c.fill();
   // arms: start inside the sleeve, taper past the elbow to the hand at the hip
   const W2=34*u,TOP=68*u,HH=80*u;
-  for(const sd of [-1,1]){const x0=cx+sd*W2*1.04,y0=TOP+HH*.34,x1=cx+sd*W2*1.0,y1=TOP+HH*1.08;
+  for(const sd of [-1,1]){const x0=cx+sd*W2*1.04,y0=TOP+HH*.36,x1=cx+sd*W2*.98,y1=TOP+HH*1.06;
     const ag=c.createLinearGradient(x0-sd*7*u,0,x0+sd*7*u,0);ag.addColorStop(0,shade(sk,-.05));ag.addColorStop(1,shade(sk,-.3));c.fillStyle=ag;
-    c.beginPath();c.moveTo(x0-6.5*u,y0);c.bezierCurveTo(x0-7*u,y0+22*u,x1-6*u,y1-18*u,x1-4.6*u,y1);c.quadraticCurveTo(x1,y1+2*u,x1+4.6*u,y1);
-    c.bezierCurveTo(x1+6*u,y1-18*u,x0+7*u,y0+22*u,x0+6.5*u,y0);c.closePath();c.fill();
+    c.beginPath();c.moveTo(x0-4.8*u,y0);c.bezierCurveTo(x0-5*u,y0+22*u,x1-4.6*u,y1-18*u,x1-3.8*u,y1);c.quadraticCurveTo(x1,y1+1.5*u,x1+3.8*u,y1);
+    c.bezierCurveTo(x1+4.6*u,y1-18*u,x0+5*u,y0+22*u,x0+4.8*u,y0);c.closePath();c.fill();
     c.strokeStyle=shade(sk,-.3);c.lineWidth=.8*u;c.beginPath();c.moveTo(x0-3*u,y0+36*u);c.quadraticCurveTo(x0,y0+38*u,x0+3*u,y0+36*u);c.stroke();
-    const hx=x1,hy=y1+6*u;c.fillStyle=shade(sk,-.06);c.beginPath();c.ellipse(hx,hy,5.6*u,8*u,0,0,7);c.fill();
-    c.fillStyle=shade(sk,-.01);c.beginPath();c.ellipse(hx-sd*4.6*u,hy-2.5*u,2.2*u,4.6*u,-sd*.35,0,7);c.fill();
+    const hx=x1,hy=y1+5.5*u;c.fillStyle=shade(sk,-.06);c.beginPath();c.ellipse(hx,hy,4.8*u,7.2*u,0,0,7);c.fill();
+    c.fillStyle=shade(sk,-.01);c.beginPath();c.ellipse(hx-sd*3.9*u,hy-2.5*u,1.9*u,4.2*u,-sd*.35,0,7);c.fill();
     c.strokeStyle=shade(sk,-.3);c.lineWidth=.6*u;for(const k of [-1.8,0,1.8]){c.beginPath();c.moveTo(hx+k*u,hy+3*u);c.lineTo(hx+k*u,hy+7*u);c.stroke()}}
   // neck then shirt then head, so everything joins up
-  const R=17*u,hy=36*u;
+  const R=17*u,hy=41*u;
   drawCollarBack(c,cx,68*u,34*u,80*u);drawNeck(c,cx,hy,R,74*u);
   drawPolo(c,cx,68*u,34*u,80*u,u,true);
   drawHead(c,cx,hy,R);
