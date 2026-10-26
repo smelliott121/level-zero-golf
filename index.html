@@ -267,11 +267,10 @@ input[type=range]{width:100%;accent-color:var(--flag)}
     <div class="sheet" id="acctSheet" hidden>
       <div class="card">
         <h2 style="font-size:32px" id="acctTitle">Sign in</h2>
-        <p class="sub" id="acctMsg">Use your email and a password. Your level, handicap and clubs follow you to any phone.</p>
+        <p class="sub" id="acctMsg">Pick a username and password. No email needed. Your level, handicap and clubs follow you to any phone.</p>
         <form id="acctForm" style="display:flex;flex-direction:column;gap:10px">
-          <label class="fld" for="acEmail">Email<input id="acEmail" type="email" autocomplete="email" required></label>
+          <label class="fld" for="acEmail">Username<input id="acEmail" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" maxlength="16" required></label>
           <label class="fld" for="acPass">Password<input id="acPass" type="password" autocomplete="current-password" minlength="6" required></label>
-          <label class="fld" for="acNick" id="acNickRow" hidden>Name on the leaderboard<input id="acNick" maxlength="16" autocomplete="nickname"></label>
           <button class="btn main" id="acGo" type="submit">Sign in</button>
         </form>
         <button class="btn" id="acSwap">New here? Create an account</button>
@@ -1049,7 +1048,7 @@ async function sbInit(){
 }
 function renderAccount(){
   const blk=$('#acctBlock');if(!blk)return;blk.hidden=!SB;if(!SB)return;
-  if(SBUSER){$('#acctName').textContent=SBNICK||AV.name||'Signed in';$('#acctSub').textContent=`Signed in as ${SBUSER.email}. Rounds post to the leaderboard automatically.`;$('#acctBtn').textContent='Sign out'}
+  if(SBUSER){$('#acctName').textContent=SBNICK||AV.name||'Signed in';$('#acctSub').textContent=`Signed in as ${SBNICK||userFrom(SBUSER.email)}. Rounds post to the leaderboard automatically.`;$('#acctBtn').textContent='Sign out'}
   else{$('#acctName').textContent='Not signed in';$('#acctSub').textContent='Sign in to post rounds to the leaderboard and keep your progress on any phone.';$('#acctBtn').textContent='Sign in'}
 }
 // adopt whichever copy of progress has played more: the phone's or the account's
@@ -1064,7 +1063,7 @@ async function sbPull(){
   renderAccount();
 }
 async function sbSaveProfile(){
-  if(!SB||!SBUSER)return;const b=brand(),nick=(SBNICK||(AV.name!=='Player'?AV.name:'')||SBUSER.email.split('@')[0]).slice(0,16);
+  if(!SB||!SBUSER)return;const b=brand(),nick=(SBNICK||userFrom(SBUSER.email)).slice(0,16);
   try{await SB.from('players').upsert({id:SBUSER.id,nick,level:P.lvl,handicap:P.hc.exact,rounds:P.rounds,brand:b?b.name:null,save:{P,AV},updated_at:new Date().toISOString()});SBNICK=nick}catch(e){}
 }
 async function sbRound(card,stab){
@@ -1073,21 +1072,28 @@ async function sbRound(card,stab){
     if(error)toast(/18 holes/.test(error.message)?'Round not posted: 18 holes a day.':'Round saved on this phone; posting to the board failed.','bad');else toast('Round posted to the leaderboard','good')}catch(e){}
 }
 let acMode='in';
-function openAccount(){closeSheets();acMode='in';syncAcct();$('#acctMsg').textContent='Use your email and a password. Your level, handicap and clubs follow you to any phone.';$('#acctSheet').hidden=false}
+// accounts use a username only: Supabase gets a placeholder address built from it, which is never shown and never emailed
+const userMail=u=>`${u.toLowerCase()}@players.levelzerogolf.app`;
+const userFrom=em=>(em||'').split('@')[0];
+function openAccount(){closeSheets();acMode='in';syncAcct();$('#acctMsg').textContent='Pick a username and password. No email needed. Your level, handicap and clubs follow you to any phone.';$('#acctSheet').hidden=false}
 function syncAcct(){const up=acMode==='up';$('#acctTitle').textContent=up?'Create account':'Sign in';$('#acGo').textContent=up?'Create account':'Sign in';
-  $('#acNickRow').hidden=!up;$('#acNick').required=up;$('#acPass').autocomplete=up?'new-password':'current-password';$('#acSwap').textContent=up?'Have an account? Sign in':'New here? Create an account';
-  if(up&&!$('#acNick').value&&AV.name!=='Player')$('#acNick').value=AV.name}
+  $('#acPass').autocomplete=up?'new-password':'current-password';$('#acSwap').textContent=up?'Have an account? Sign in':'New here? Create an account';
+  if(up&&!$('#acEmail').value&&/^[A-Za-z0-9_-]{3,16}$/.test(AV.name))$('#acEmail').value=AV.name}
 $('#acSwap').onclick=()=>{acMode=acMode==='in'?'up':'in';syncAcct()};
 $('#acClose').onclick=()=>openMenu();
 $('#acctForm').addEventListener('submit',async e=>{
-  e.preventDefault();if(!SB)return;const email=$('#acEmail').value.trim(),password=$('#acPass').value,msg=$('#acctMsg'),go=$('#acGo');go.disabled=true;
+  e.preventDefault();if(!SB)return;const user=$('#acEmail').value.trim(),password=$('#acPass').value,msg=$('#acctMsg'),go=$('#acGo');
+  if(!/^[A-Za-z0-9_-]{3,16}$/.test(user)){msg.textContent='Usernames are 3 to 16 letters, numbers, - or _.';return}
+  if(password.length<6){msg.textContent='Passwords need at least 6 characters.';return}
+  const email=userMail(user);go.disabled=true;
   try{
-    if(acMode==='up'){const nick=$('#acNick').value.trim().slice(0,16);if(!nick){msg.textContent='Pick a name for the leaderboard.';return}
-      const {data,error}=await SB.auth.signUp({email,password});if(error){msg.textContent=error.message;return}
-      SBNICK=nick;if(AV.name==='Player'){AV.name=nick;saveAv()}
-      if(!data.session){msg.textContent='Nearly there. Check your email for a confirmation link, then come back and sign in.';acMode='in';syncAcct();return}
-      SBUSER=data.session.user;await sbSaveProfile();
-    }else{const {data,error}=await SB.auth.signInWithPassword({email,password});if(error){msg.textContent=error.message==='Invalid login credentials'?'That email and password don\'t match an account.':error.message;return}SBUSER=data.user;await sbPull()}
+    if(acMode==='up'){
+      const taken=await SB.from('players').select('id').ilike('nick',user).limit(1);if(taken.data&&taken.data.length){msg.textContent='That username is taken. Try another.';return}
+      const {data,error}=await SB.auth.signUp({email,password});
+      if(error){msg.textContent=/registered|exists/i.test(error.message)?'That username is taken. Try another.':error.message;return}
+      if(!data.session){msg.textContent='Sign-ups need email confirmation switched off in Supabase. Ask Sam to turn it off, then try again.';return}
+      SBUSER=data.session.user;SBNICK=user;if(AV.name==='Player'){AV.name=user;saveAv()}await sbSaveProfile();
+    }else{const {data,error}=await SB.auth.signInWithPassword({email,password});if(error){msg.textContent=/Invalid login/i.test(error.message)?'That username and password don\'t match an account.':error.message;return}SBUSER=data.user;await sbPull()}
     toast('Signed in','good');openMenu();
   }finally{go.disabled=false}
 });

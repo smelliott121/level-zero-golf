@@ -31,7 +31,7 @@ It then opens full-screen from its own icon and works offline. Progress is saved
 
 1. Create a free project at supabase.com (region: London).
 2. **SQL Editor → New query:** paste `supabase/schema.sql` and press Run. It creates the tables, the leaderboard and the security rules (players can only post their own rounds, two rounds a day).
-3. **Authentication → Sign In / Providers → Email:** optionally turn off *Confirm email* so friends can play straight away.
+3. **Authentication → Sign In / Providers → Email:** turn off *Confirm email*. Players sign up with a username and password only; the app gives Supabase a placeholder address built from the username, which is never emailed.
 4. **Project Settings → API:** copy the Project URL and the `anon` public key into the `window.LZG_SUPABASE` line near the top of `index.html`.
 
 The anon key is designed to be public; the security rules in `schema.sql` are what protect the data.

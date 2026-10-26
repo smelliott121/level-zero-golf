@@ -13,6 +13,9 @@ create table if not exists public.players (
   updated_at  timestamptz not null default now()
 );
 
+-- usernames are unique, whatever the capitals
+create unique index if not exists players_nick_unique on public.players (lower(nick));
+
 -- every completed nine-hole round
 create table if not exists public.rounds (
   id          bigint generated always as identity primary key,
