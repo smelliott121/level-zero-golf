@@ -437,7 +437,7 @@ const BAY=[
    green:E(33,358,11,15),pin:V(34,362),bunkers:[E(45,350,3,4)],water:[],
    clumps:[[-6,175,6],[30,110,6]],tilt:V(.012,.02),bumps:[[4,5,.16,4]],treeD:30,obD:58,obR:42},
   {name:'Over the Wood',par:3,cl:[V(0,0),V(14,183)],fw:[V(10,150),V(13,170)],fwW:9,
-   green:E(16,191,12,15),pin:V(18,195),bunkers:[E(30,191,4,6),E(6,207,3,5)],water:[],
+   green:E(16,191,12,15),pin:V(18,195),bunkers:[],sand:[{pts:[V(2,175),V(.5,190),V(2.5,206)],w:2.6},{pts:[V(23,168),V(29.5,176),V(32,189),V(30.5,201),V(25,209)],w:2.3}],water:[],
    clumps:[[-16,150,8],[34,150,7]],obZones:[E(7,96,34,50)],elev:-14,tilt:V(.01,.02),bumps:[[-4,5,.18,5]],treeD:28,obD:52}];
 const COURSES={links:{id:'links',name:'Level Zero Links',blurb:'Lakes, an island green and a long par 5.',holes:LINKS,wind:[2,15]},
   bay:{id:'bay',name:'Bayview Heath',blurb:'Tight, tree-lined heathland nine on the Jersey clifftops. Hilly, with a gorge on the 9th.',holes:BAY,wind:[4,16]}};
@@ -484,7 +484,7 @@ function inE(p,e,k=1){const dx=(p.x-e.x)/e.rx,dy=(p.y-e.y)/e.ry;return Math.hypo
 function wobble(e,seed,amp){let s=seed*7919+13;const r=()=>{s=(s*16807)%2147483647;return s/2147483647};e._w=[[2,amp*(.5+r()*.5),r()*6.28],[3,amp*.7*(.4+r()*.6),r()*6.28],[5,amp*.35*r(),r()*6.28]]}
 function lieAt(p){
   if(inE(p,H.green))return'green';
-  if(H.bunkers.some(e=>inE(p,e)))return'bunker';
+  if(H.bunkers.some(e=>inE(p,e))||(H.sand||[]).some(b=>dPoly(p,b.pts)<=b.w))return'bunker';
   if(inE(p,H.green,1.3))return'fringe';
   if((H.obZones||[]).some(e=>inE(p,e)))return'ob';
   if(H.water.some(e=>inE(p,e)))return'water';
@@ -1101,6 +1101,7 @@ function camTarget(){
   if(G.anim){pts.push(G.anim.end,G.anim.from);if(G.anim.land)pts.push(G.anim.land)}
   else if(G.state!=='done'&&G.club!=='Putter')pts.push(preview().land);
   const putting=G.club==='Putter'||(G.anim&&G.anim.type==='putt');
+  if(putting){const g=H.green;pts.push({x:g.x-g.rx*1.12,y:g.y-g.ry*1.12},{x:g.x+g.rx*1.12,y:g.y+g.ry*1.12})}
   let x0=Infinity,x1=-Infinity,y0=Infinity,y1=-Infinity;
   for(const p of pts){x0=Math.min(x0,p.x);x1=Math.max(x1,p.x);y0=Math.min(y0,p.y);y1=Math.max(y1,p.y)}
   const pad=putting?6:16,bw=Math.max(x1-x0+pad*2,putting?18:46),bh=Math.max(y1-y0+pad*2,putting?24:64);
@@ -1207,6 +1208,10 @@ function draw(now){
     shapePath(e);ctx.fillStyle=pat('sand');ctx.fill();
     ctx.save();shapePath(e);ctx.clip();shapePath(e,1,-Math.max(1.5,.7*s));ctx.strokeStyle='rgba(110,85,45,.35)';ctx.lineWidth=Math.max(3,1.6*s);ctx.stroke();ctx.restore();
     shapePath(e);ctx.strokeStyle='rgba(255,250,230,.45)';ctx.lineWidth=Math.max(.8,.2*s);ctx.stroke()});
+  (H.sand||[]).forEach(b=>{ctx.save();ctx.lineCap='round';ctx.lineJoin='round';
+    polyPath(b.pts);ctx.strokeStyle='rgba(30,58,22,.35)';ctx.lineWidth=(b.w+1.2)*2*s;ctx.stroke();
+    polyPath(b.pts);ctx.strokeStyle=pat('sand');ctx.lineWidth=b.w*2*s;ctx.stroke();
+    ctx.translate(-.5*s,-.5*s);polyPath(b.pts);ctx.strokeStyle='rgba(110,85,45,.22)';ctx.lineWidth=Math.max(1.5,.6*s);ctx.stroke();ctx.restore()});
   // trees: shadows first (sun top-left), then canopies
   const m=10*s,vis=[];
   for(const t of H._trees){const c=S(t),r=t.r*s;if(c.x<-r-m||c.x>W+r+m||c.y<-r-m||c.y>Hc+r+m)continue;vis.push([t,c,r])}
@@ -1218,9 +1223,9 @@ function draw(now){
     H._ob.forEach(([a,b],i)=>{if(i%5)return;const s=S({x:(a.x+b.x)/2,y:(a.y+b.y)/2});if(s.x<-5||s.x>W+5||s.y<-5||s.y>Hc+5)return;ctx.beginPath();ctx.arc(s.x,s.y,sr,0,7);ctx.fill()})}
   // cup and flag blowing with the wind
   const pc=S(H.pin);
-  if(!H.noCup){const cr=Math.max(2.2,.12*cam.s*1.6);ctx.beginPath();ctx.arc(pc.x,pc.y,cr,0,7);ctx.fillStyle='#0b120d';ctx.fill()}
+  if(!H.noCup){const cr=clamp(.36*cam.s,2.4,5.5);ctx.beginPath();ctx.arc(pc.x,pc.y,cr,0,7);ctx.fillStyle='#0b120d';ctx.fill()}
   else{ctx.beginPath();ctx.arc(pc.x,pc.y,Math.max(6,8*cam.s),0,7);ctx.strokeStyle='rgba(255,255,255,.35)';ctx.lineWidth=1.2;ctx.stroke()}
-  const fh=Math.max(16,Math.min(34,cam.s*3)),top={x:pc.x,y:pc.y-fh};
+  const fh=clamp(cam.s*2.4,14,28),top={x:pc.x,y:pc.y-fh};
   ctx.strokeStyle='#f4f1e8';ctx.lineWidth=1.6;ctx.beginPath();ctx.moveTo(pc.x,pc.y);ctx.lineTo(top.x,top.y);ctx.stroke();
   const wd=G.wind.spd<2?90:G.wind.dir,flut=Math.sin(now/120)*.12*Math.min(1,G.wind.spd/10),ang=(wd-90)*D2R+flut;
   const fl=fh*(.4+.25*Math.min(1,G.wind.spd/15));
@@ -1254,9 +1259,9 @@ function draw(now){
   const bp=ballPos(now);
   if(G.anim&&G.anim.type==='shot'&&bp.h>0)G.trail.push({...bp.p,h:bp.h});
   if(G.trail.length>1){ctx.beginPath();G.trail.forEach((q,i)=>{const s=S(q),y=s.y-q.h*cam.s*.5;i?ctx.lineTo(s.x,y):ctx.moveTo(s.x,y)});ctx.strokeStyle='rgba(255,255,255,.35)';ctx.lineWidth=1.5;ctx.stroke()}
-  if(G.state!=='done'&&G.state!=='wait'||G.anim){const at=S(G.anim?G.anim.from:G.ball),pose=swingPose(now);drawAv(ctx,at.x-AV_BALL*(AV.lefty?-1:1),at.y+.6,1,pose.b,pose.h,pose.putt)}
+  if(G.state!=='done'&&G.state!=='wait'||G.anim){const at=S(G.anim?G.anim.from:G.ball),pose=swingPose(now);const avs=clamp(cam.s/13,.55,.95);drawAv(ctx,at.x-AV_BALL*avs*(AV.lefty?-1:1),at.y+.6,avs,pose.b,pose.h,pose.putt)}
   if(!(G.state==='done'&&!G.anim)){
-    const s=S(bp.p),br=Math.max(3.2,.14*cam.s),lift=bp.h*cam.s*.5;
+    const s=S(bp.p),br=clamp(.24*cam.s,2.8,4.2),lift=bp.h*cam.s*.5;
     ctx.beginPath();ctx.ellipse(s.x+lift*.3,s.y+1,br*1.1,br*.8,0,0,7);ctx.fillStyle='rgba(0,0,0,.35)';ctx.fill();
     ctx.beginPath();ctx.arc(s.x,s.y-lift,br*(1+bp.h/120),0,7);ctx.fillStyle='#fff';ctx.fill();ctx.strokeStyle='rgba(0,0,0,.35)';ctx.lineWidth=1;ctx.stroke();
   }

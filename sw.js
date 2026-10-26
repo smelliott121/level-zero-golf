@@ -1,6 +1,6 @@
 // Level Zero Golf service worker: keeps the game playable offline.
 // Bump VERSION whenever index.html changes so phones pick up the update.
-const VERSION = 'lzg-v2';
+const VERSION = 'lzg-v3';
 const CORE = ['./', 'index.html', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-180.png', 'icons/maskable-512.png'];
 
 self.addEventListener('install', e => {
