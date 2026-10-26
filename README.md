@@ -8,6 +8,9 @@ A mobile golf career game. Everyone starts at level 0. Practise, finish rounds a
 - **Putting:** contoured greens, a putt guide, a perfect-line sliver and a perfect-pace sliver. Anything inside 3 ft is a gimme.
 - **Progression:** XP and levels, 3 skill points a level, and club deals from bargain-bin starter sets up to tour staff bags.
 - **Practice area:** four challenges, one go each per day.
+- **18 holes a day:** two 9-hole rounds per day, so levels are earned.
+- **Handicap:** after 54 holes you get a handicap under the old UK (CONGU) system: categories, buffer zones and 0.1 increases, ready for nett and Stableford competitions.
+- **Handicap card:** your golfer's face, handicap, records and trophies.
 
 ## Play it
 

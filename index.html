@@ -181,6 +181,23 @@ input[type=range]{width:100%;accent-color:var(--flag)}
 .skc button{width:32px;height:32px;border-radius:8px;border:1px solid var(--line);background:var(--track);font-size:17px;padding:0}
 .skc button:disabled{opacity:.3;cursor:default}
 .skc span{min-width:24px;text-align:center;font-family:var(--display);font-size:18px;font-weight:700;font-variant-numeric:tabular-nums}
+.hcc{border-radius:14px;padding:14px;background:linear-gradient(160deg,#1d3a29,#0f2018);border:1px solid #2f5a3f;display:flex;flex-direction:column;gap:12px}
+.hcc .hctop{display:flex;gap:12px;align-items:center}
+.hcc canvas{width:64px;height:64px;border-radius:50%;flex:none;background:#0a1510;border:2px solid var(--flag)}
+.hcc .who{flex:1;min-width:0}
+.hcc .who b{display:block;font-family:var(--display);font-size:22px;text-transform:uppercase;letter-spacing:.04em;line-height:1.05}
+.hcc .who small{color:var(--muted);font-size:12px}
+.hcc .hc{text-align:right;flex:none}
+.hcc .hc span{display:block;font-family:var(--display);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.hcc .hc b{font-family:var(--display);font-size:34px;line-height:1;color:var(--flag);font-variant-numeric:tabular-nums}
+.hcc .hc small{display:block;font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
+.hcc .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.hcc .grid div{background:rgba(0,0,0,.25);border-radius:8px;padding:6px 4px;text-align:center}
+.hcc .grid b{display:block;font-family:var(--display);font-size:18px;font-variant-numeric:tabular-nums}
+.hcc .grid span{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.troph{display:flex;flex-wrap:wrap;gap:5px}
+.troph span{font-size:11px;font-weight:600;padding:3px 8px;border-radius:999px;border:1px solid var(--line);color:var(--muted);opacity:.55}
+.troph span.got{border-color:var(--flag);color:var(--flag);opacity:1}
 .howto{margin:0;padding-left:18px;color:var(--muted);font-size:13px;line-height:1.45;display:flex;flex-direction:column;gap:4px}
 @media (prefers-reduced-motion:reduce){.toast,.meter .zone,.callout{transition:none}}
 </style>
@@ -253,6 +270,7 @@ input[type=range]{width:100%;accent-color:var(--flag)}
     <div class="sheet" id="setSheet" hidden>
       <div class="card">
         <h2 style="font-size:32px">Player</h2>
+        <div id="hcCard"></div>
         <div class="avtop">
           <canvas id="avPrev" width="192" height="220"></canvas>
           <label for="pName">Name<input id="pName" maxlength="16" autocomplete="off"></label>
@@ -275,11 +293,6 @@ input[type=range]{width:100%;accent-color:var(--flag)}
           <li>White stakes are out of bounds: one shot penalty and play again from the same spot.</li>
           <li>Each level gives 3 skill points. The practice area opens once a day, one go at each challenge.</li>
         </ul>
-        <h3>Testing</h3>
-        <div class="lvline"><span>Play at level</span><span id="rangeVal">0</span></div>
-        <input type="range" id="lvlRange" min="0" max="50" step="1" value="0" aria-label="Test level">
-        <button class="btn" id="applyLvl">Set level</button>
-        <button class="btn" id="resetPrac">Reopen today's practice</button>
         <button class="btn warn" id="resetBtn">Reset progress</button>
         <button class="btn main" id="closeSet">Done</button>
       </div>
@@ -347,22 +360,22 @@ const BRANDS=[
   {id:'hippa',name:'Hippa',lvl:0,blurb:'Supermarket box set. Very forgiving, very short.',fx:{power:-2,forgive:3},sign:0,round:5},
   {id:'uskidz',name:'US Kidz',lvl:0,blurb:'Built for juniors. Sweet little wedges, zero pop.',fx:{power:-4,short:3,accuracy:1},sign:0,round:5},
   {id:'meridyn',name:'Meridyn',lvl:0,blurb:'Car boot bargain. Lovely putter, wild with the woods.',fx:{putting:3,driving:-2},sign:0,round:5},
-  {id:'dunlap',name:'Dunlap',lvl:6,blurb:'Solid club-pro favourite. Nothing flashy, nothing scary.',fx:{forgive:2,irons:1},sign:40,round:10},
-  {id:'wilsen',name:'Wilsen',lvl:6,blurb:'Old-school blades and a great flat stick.',fx:{short:2,putting:2,forgive:-1},sign:40,round:10},
-  {id:'slazinger',name:'Slazinger',lvl:6,blurb:'Straight-hitting game-improvement woods.',fx:{driving:2,accuracy:1,power:-1},sign:40,round:10},
-  {id:'cobro',name:'Cobro',lvl:15,blurb:'Loud colours, louder drives. Can go anywhere.',fx:{power:3,driving:2,accuracy:-1},sign:80,round:15},
-  {id:'mizuna',name:'Mizuna',lvl:15,blurb:'Forged irons that reward a pure strike, punish a bad one.',fx:{irons:4,accuracy:2,forgive:-1},sign:80,round:15},
-  {id:'srixen',name:'Srixen',lvl:15,blurb:'Well-rounded tour gear with a soft ball deal.',fx:{power:2,irons:2,short:1},sign:80,round:15},
-  {id:'pong',name:'Pong',lvl:28,blurb:'Ugly-but-brilliant forgiveness, iconic putters.',fx:{forgive:4,putting:3,accuracy:1},sign:150,round:25},
-  {id:'taylermaid',name:'TaylerMaid',lvl:28,blurb:'The bomber deal. Big woods, big money.',fx:{power:5,driving:3,forgive:-1},sign:150,round:25},
-  {id:'kallaway',name:'Kallaway',lvl:28,blurb:'All-rounder staff bag with a great wedge line.',fx:{power:3,accuracy:2,short:2},sign:150,round:25},
-  {id:'titlust',name:'Titlust',lvl:40,blurb:'The tour staple. Precision everywhere, ego included.',fx:{irons:4,short:4,putting:3,accuracy:2,forgive:1},sign:300,round:40}];
+  {id:'dunlap',name:'Dunlap',lvl:3,blurb:'Solid club-pro favourite. Nothing flashy, nothing scary.',fx:{forgive:2,irons:1},sign:40,round:10},
+  {id:'wilsen',name:'Wilsen',lvl:3,blurb:'Old-school blades and a great flat stick.',fx:{short:2,putting:2,forgive:-1},sign:40,round:10},
+  {id:'slazinger',name:'Slazinger',lvl:3,blurb:'Straight-hitting game-improvement woods.',fx:{driving:2,accuracy:1,power:-1},sign:40,round:10},
+  {id:'cobro',name:'Cobro',lvl:8,blurb:'Loud colours, louder drives. Can go anywhere.',fx:{power:3,driving:2,accuracy:-1},sign:80,round:15},
+  {id:'mizuna',name:'Mizuna',lvl:8,blurb:'Forged irons that reward a pure strike, punish a bad one.',fx:{irons:4,accuracy:2,forgive:-1},sign:80,round:15},
+  {id:'srixen',name:'Srixen',lvl:8,blurb:'Well-rounded tour gear with a soft ball deal.',fx:{power:2,irons:2,short:1},sign:80,round:15},
+  {id:'pong',name:'Pong',lvl:15,blurb:'Ugly-but-brilliant forgiveness, iconic putters.',fx:{forgive:4,putting:3,accuracy:1},sign:150,round:25},
+  {id:'taylermaid',name:'TaylerMaid',lvl:15,blurb:'The bomber deal. Big woods, big money.',fx:{power:5,driving:3,forgive:-1},sign:150,round:25},
+  {id:'kallaway',name:'Kallaway',lvl:15,blurb:'All-rounder staff bag with a great wedge line.',fx:{power:3,accuracy:2,short:2},sign:150,round:25},
+  {id:'titlust',name:'Titlust',lvl:25,blurb:'The tour staple. Precision everywhere, ego included.',fx:{irons:4,short:4,putting:3,accuracy:2,forgive:1},sign:300,round:40}];
 const FXN={power:'Power',accuracy:'Accuracy',driving:'Driving',irons:'Irons',short:'Short game',putting:'Putting',forgive:'Forgiveness'};
-const P={lvl:0,xp:0,sp:0,st:{},prac:{date:'',done:{}},gear:null,bests:{},rounds:0};STATS.forEach(s=>P.st[s[0]]=0);
+const P={lvl:0,xp:0,sp:0,st:{},prac:{date:'',done:{}},gear:null,bests:{},rounds:0,day:{date:'',holes:0},hc:{cards:[],exact:null,last:null},stats:{}};STATS.forEach(s=>P.st[s[0]]=0);
 (()=>{const s=ls.get('lzg');if(!s)return;P.lvl=clamp(s.lvl|0,0,50);P.xp=Math.max(0,s.xp|0);
   if(s.st){STATS.forEach(k=>P.st[k[0]]=clamp(s.st[k[0]]|0,0,SMAX));P.sp=Math.max(0,s.sp|0)}else P.sp=P.lvl*SP_PER_LVL;
   if(s.prac&&s.prac.done)P.prac=s.prac;
-  if(s.gear&&BRANDS.some(b=>b.id===s.gear.id))P.gear=s.gear;if(s.bests&&typeof s.bests==='object')P.bests=s.bests;else if(s.best)P.bests.links=s.best;P.rounds=s.rounds|0})();
+  if(s.gear&&BRANDS.some(b=>b.id===s.gear.id))P.gear=s.gear;if(s.bests&&typeof s.bests==='object')P.bests=s.bests;else if(s.best)P.bests.links=s.best;P.rounds=s.rounds|0;if(s.day)P.day=s.day;if(s.hc&&Array.isArray(s.hc.cards))P.hc=s.hc;if(s.stats)P.stats=s.stats})();
 const save=()=>ls.set('lzg',P);
 // XP to the next level: ~150 XP a day (a round plus the four practice challenges) puts a new player on level 4 after about 5 days
 const need=l=>120+40*l+5*l*l;
@@ -449,8 +462,8 @@ const BAY=[
   {name:'Over the Wood',par:3,cl:[V(0,0),V(14,183)],fw:[V(10,150),V(13,170)],fwW:9,
    green:E(16,191,12,15),pin:V(18,195),bunkers:[],sand:[{pts:[V(2,175),V(.5,190),V(2.5,206)],w:2.6},{pts:[V(23,168),V(29.5,176),V(32,189),V(30.5,201),V(25,209)],w:2.3}],water:[],
    clumps:[[-16,150,8],[34,150,7]],obZones:[E(7,96,34,50)],elev:-14,tilt:V(.01,.02),bumps:[[-4,5,.18,5]],treeD:28,obD:52}];
-const COURSES={links:{id:'links',name:'Level Zero Links',blurb:'Lakes, an island green and a long par 5.',holes:LINKS,wind:[2,15]},
-  bay:{id:'bay',name:'Bayview Heath',blurb:'Tight, tree-lined heathland nine on the Jersey clifftops. Hilly, with a gorge on the 9th.',holes:BAY,wind:[4,16]}};
+const COURSES={links:{id:'links',name:'Level Zero Links',blurb:'Lakes, an island green and a long par 5.',holes:LINKS,wind:[2,15],sss:35,si:[5,8,1,6,2,4,3,9,7]},
+  bay:{id:'bay',name:'Bayview Heath',blurb:'Tight, tree-lined heathland nine on the Jersey clifftops. Hilly, with a gorge on the 9th.',holes:BAY,wind:[4,16],sss:34,si:[3,4,8,6,1,5,9,2,7]}};
 let CUR='links',COURSE=LINKS,COURSE_PAR=0;
 function useCourse(id){CUR=COURSES[id]?id:'links';COURSE=COURSES[CUR].holes;COURSE_PAR=COURSE.reduce((a,h)=>a+h.par,0)}
 useCourse('links');
@@ -794,18 +807,30 @@ function finishHole(A){
   if(G.fairway)xp.push(['Fairway hit',5]);
   if(G.gir)xp.push(['Green in regulation',10]);
   R.scores[R.i]=n;
+  {const S_=P.stats;S_.holes=(S_.holes||0)+1;if(!A.pickedUp){if(n===1)S_.hio=(S_.hio||0)+1;if(rel===0)S_.pars=(S_.pars||0)+1;if(rel===-1)S_.birdies=(S_.birdies||0)+1;if(rel<=-2&&n>1)S_.eagles=(S_.eagles||0)+1;
+    if(A.type==='shot'&&A.club==='Pitch')S_.chipins=(S_.chipins||0)+1;if(A.type==='putt')S_.longPutt=Math.max(S_.longPutt||0,Math.round(A.ft))}
+   if(P.day.date!==today())P.day={date:today(),holes:0};P.day.holes++;}
+  let hcLine='';
   const last=R.i===COURSE.length-1;
   if(last){const tot=R.scores.reduce((a,b)=>a+b,0);xp.push(['Round complete',25]);if(tot<=COURSE_PAR)xp.push(['Level par or better',50]);
     const b=brand();if(b){xp.push([`${b.name} round bonus`,b.round]);P.gear.left=Math.max(0,(P.gear.left||0)-1)}
+    const co=COURSES[CUR],card={c:CUR,s:R.scores.slice(),par:COURSE.map(h=>h.par),si:co.si,sss:co.sss,date:today()};
+    const hadHc=P.hc.exact!=null,hcBefore=P.hc.exact,res=applyCard(card);
+    if(hadHc){const pts=P.hc.last.stab,hcp=Math.round(hcBefore);hcLine=` Stableford ${pts} pts · nett ${tot-Math.round(hcp/2)} · handicap ${fmtHc(hcBefore)} → ${fmtHc(P.hc.exact)}.`;
+      if(P.stats.bestStab==null||pts>P.stats.bestStab)P.stats.bestStab=pts}
+    else if(res.first){hcLine=` You now have a handicap: ${fmtHc(P.hc.exact)}.`;xp.push(['First handicap',50]);callout(`Handicap ${Math.round(P.hc.exact)}!`,'good')}
+    else hcLine=` ${res.left} more round${res.left===1?'':'s'} to a handicap.`;
+    if(P.stats.bestGross==null||tot<P.stats.bestGross)P.stats.bestGross=tot;if(tot<=COURSE_PAR)P.stats.parRounds=(P.stats.parRounds||0)+1;
     P.rounds++;const pb=P.bests[CUR];if(!pb||tot<pb.strokes){P.bests[CUR]={strokes:tot,toPar:tot-COURSE_PAR,date:today()};xp.push(['New personal best',20])}save()}
   saveR();
   const ups=awardXP(xp.reduce((a,x)=>a+x[1],0));
   if(last)pushScore();
   const rt=R.scores.reduce((a,b)=>a+(b||0),0);
   const holeLine=A.pickedUp?`Hole ${R.i+1}: ${AV.name} picked up on ${n}.`:`Hole ${R.i+1}, ${H.name}: ${n} shot${n>1?'s':''} on a par ${par}.`;
-  showEnd({title,cls,sub:last?`${holeLine} Round complete: ${rt}, ${fmtPar(rt-COURSE_PAR)} on a par ${COURSE_PAR}.`:holeLine,
+  const more=canStartRound();
+  showEnd({title,cls,sub:last?`${holeLine} Round complete: ${rt}, ${fmtPar(rt-COURSE_PAR)} on a par ${COURSE_PAR}.${hcLine}${more?'':' That is your 18 holes for today.'}`:holeLine,
     card:scorecard(R.i),xp,ups,
-    main:last?['New round',()=>{R={c:CUR,i:0,scores:[]};saveR();closeSheets();startHole(0)}]:['Next hole',()=>{R.i++;saveR();closeSheets();startHole(R.i)}],
+    main:last?(more?['New round',()=>{R={c:CUR,i:0,scores:[]};saveR();closeSheets();startHole(0)}]:['Menu',()=>{R=null;saveR();openMenu()}]):['Next hole',()=>{R.i++;saveR();closeSheets();startHole(R.i)}],
     alt:['Menu',()=>{if(last){R=null;saveR()}else{R.i++;saveR();startHole(R.i)}openMenu()}],
     final:last});
 }
@@ -822,7 +847,7 @@ function practiceSettle(A){
 function finishChallenge(){
   G.state='done';updateUI();
   const tot=G.ch.pts.reduce((a,b)=>a+b,0),pct=tot/H.max,grade=pct>=.6?'Gold':pct>=.35?'Silver':'Bronze';
-  P.prac.done[H.key]=tot;
+  P.prac.done[H.key]=tot;if(grade==='Gold')P.stats.golds=(P.stats.golds||0)+1;
   const xp=G.ch.pts.map((p,i)=>[`Ball ${i+1}`,p]);
   const bonus=grade==='Gold'?20:grade==='Silver'?10:0;if(bonus)xp.push([`${grade} bonus`,bonus]);
   const ups=awardXP(tot+bonus);
@@ -875,13 +900,14 @@ function openMenu(){
   Object.values(COURSES).forEach(co=>{const bt=document.createElement('button');bt.textContent=co.name;bt.setAttribute('aria-pressed',String(co.id===pickCourse));
     bt.onclick=()=>{pickCourse=co.id;ls.set('lzg_course',co.id);openMenu()};cp.appendChild(bt)});
   const pc=COURSES[pickCourse],pcPar=pc.holes.reduce((a,h)=>a+h.par,0),pb=P.bests[pickCourse];
-  $('#courseBlurb').textContent=`${pc.blurb} 9 holes, par ${pcPar}.${pb?` Your best: ${fmtPar(pb.toPar)} (${pb.strokes}).`:''}${R&&R.c!==pickCourse?` Starting here ends your round at ${COURSES[R.c].name}.`:''}`;
+  $('#courseBlurb').textContent=`${pc.blurb} 9 holes, par ${pcPar}.${pb?` Your best: ${fmtPar(pb.toPar)} (${pb.strokes}).`:''}${R&&R.c!==pickCourse?` Starting here ends your round at ${COURSES[R.c].name}.`:''} Holes today: ${holesToday()} of ${MAX_HOLES_DAY}.`;
   const sameRound=R&&R.c===pickCourse;if(sameRound&&!(G&&G.mode==='round'))useCourse(R.c);
   const inRound=sameRound&&R.scores.length>0;
-  const newRound=()=>{if(!P.gear){openGear();return}useCourse(pickCourse);R={c:CUR,i:0,scores:[]};saveR();closeSheets();startHole(0)};
+  const newRound=()=>{if(!P.gear){openGear();return}if(!canStartRound()){toast('You have played your 18 holes today. Back tomorrow.','bad');return}useCourse(pickCourse);R={c:CUR,i:0,scores:[]};saveR();closeSheets();startHole(0)};
   if(sameRound){mk(G&&G.mode==='round'&&G.state!=='done'?`Continue · Hole ${R.i+1}`:`Play hole ${R.i+1}`,'main',()=>{closeSheets();if(!(G&&G.mode==='round'&&H===COURSE[R.i]&&G.state!=='done')){useCourse(R.c);startHole(R.i)}});
     mk('New round','',newRound)}
-  else mk(P.gear?'Play 9 holes':'Pick your clubs to play','main',newRound);
+  else mk(!P.gear?'Pick your clubs to play':canStartRound()?'Play 9 holes':'18 holes played today','main',newRound);
+  if(!canStartRound()&&!sameRound)rb.lastChild.disabled=true;
   renderGearNow();
   $('#menuCard').innerHTML=inRound?scorecard(-1):'';$('#menuCard').hidden=!inRound;
   // practice
@@ -931,6 +957,62 @@ function openGear(){
 }
 $('#gearClose').onclick=()=>openMenu();
 
+/* ---------- handicap: the old UK (CONGU) system, adapted to nine-hole cards ----------
+   initial: after 54 holes (six 9-hole cards) the cards pair into three 18-hole cards; holes over par+2 count as par+2;
+   your exact handicap is the best of the three (adjusted gross minus the standard scratch), capped at 54.
+   after that every card counts: holes are capped at nett double bogey; nett differential = adjusted gross - half handicap - SSS;
+   below SSS you come down by your category's rate per stroke; above the buffer zone you go up 0.1. */
+const HC_CARDS=6, MAX_HOLES_DAY=18;
+const hcCat=x=>x<=5.4?1:x<=12.4?2:x<=20.4?3:x<=28.4?4:x<=36.4?5:6;
+const playHc=()=>P.hc.exact==null?null:Math.round(P.hc.exact);
+const fmtHc=x=>x==null?'–':x<0?'+'+Math.abs(x).toFixed(1):x.toFixed(1);
+function strokesOn(si,hcp){const h9=Math.max(0,Math.round(hcp/2));return Math.floor(h9/9)+(si<=h9%9?1:0)}
+function stableford(card,hcp){return card.s.reduce((a,g,i)=>a+Math.max(0,2+card.par[i]+strokesOn(card.si[i],hcp)-g),0)}
+function applyCard(card){
+  const before=P.hc.exact;P.hc.cards.push(card);if(P.hc.cards.length>80)P.hc.cards.shift();
+  if(before==null){
+    if(P.hc.cards.length>=HC_CARDS){const c=P.hc.cards.slice(-HC_CARDS),diffs=[];
+      for(let i=0;i<6;i+=2){const adj=k=>c[k].s.reduce((a,g,j)=>a+Math.min(g,c[k].par[j]+2),0);diffs.push(adj(i)+adj(i+1)-c[i].sss-c[i+1].sss)}
+      P.hc.exact=Math.round(clamp(Math.min(...diffs),0,54)*10)/10;P.hc.last={from:null,to:P.hc.exact};return{first:true}}
+    return{left:HC_CARDS-P.hc.cards.length};
+  }
+  const hcp=Math.round(before),adj=card.s.reduce((a,g,i)=>a+Math.min(g,card.par[i]+strokesOn(card.si[i],hcp)+2),0);
+  const nd=adj-Math.round(hcp/2)-card.sss,cat=hcCat(before),rate=[.1,.2,.3,.4,.5,.6][cat-1],buf=Math.max(1,Math.round(cat/2));
+  let x=before;if(nd<0)x=before+nd*rate;else if(nd>buf)x=before+.1;
+  P.hc.exact=Math.round(clamp(x,-10,54)*10)/10;P.hc.last={from:before,to:P.hc.exact,nd,stab:stableford(card,hcp)};return{nd};
+}
+const holesToday=()=>P.day.date===today()?P.day.holes:0;
+const canStartRound=()=>holesToday()+9<=MAX_HOLES_DAY;
+const ST=k=>P.stats[k]||0;
+const TROPHIES=[['First par',()=>ST('pars')>=1],['First birdie',()=>ST('birdies')>=1],['Eagle',()=>ST('eagles')>=1],['Hole in one',()=>ST('hio')>=1],
+  ['Chip-in',()=>ST('chipins')>=1],['25 ft putt',()=>ST('longPutt')>=25],['Broke 50',()=>P.stats.bestGross!=null&&P.stats.bestGross<50],['Broke 40',()=>P.stats.bestGross!=null&&P.stats.bestGross<40],
+  ['Level par round',()=>ST('parRounds')>=1],['Handicap',()=>P.hc.exact!=null],['Single figures',()=>P.hc.exact!=null&&P.hc.exact<9.5],['Practice gold',()=>ST('golds')>=1]];
+function drawFace(c,N){
+  const col=k=>PAL[k][AV[k]];c.clearRect(0,0,N,N);const u=N/64;
+  c.fillStyle=col('shirt');c.beginPath();c.ellipse(32*u,70*u,28*u,18*u,0,0,7);c.fill();
+  c.fillStyle=col('skin');c.fillRect(27*u,38*u,10*u,10*u);c.beginPath();c.arc(32*u,30*u,14*u,0,7);c.fill();
+  c.beginPath();c.arc(18.5*u,31*u,3*u,0,7);c.arc(45.5*u,31*u,3*u,0,7);c.fill();
+  const hat=col('hat');
+  if(hat){c.fillStyle=hat;c.beginPath();c.arc(32*u,27*u,14.5*u,Math.PI*1.02,-.02*Math.PI);c.fill();c.beginPath();c.ellipse(32*u,25.5*u,18*u,4*u,0,Math.PI,0);c.fill();c.fillRect(17*u,24*u,30*u,3*u)}
+  else{c.fillStyle=col('hair');c.beginPath();c.arc(32*u,27*u,14.5*u,Math.PI*1.05,-.05*Math.PI);c.fill()}
+  c.fillStyle='#1b1b1b';c.beginPath();c.arc(27*u,31*u,1.6*u,0,7);c.arc(37*u,31*u,1.6*u,0,7);c.fill();
+  c.strokeStyle='rgba(60,25,15,.8)';c.lineWidth=1.4*u;c.lineCap='round';c.beginPath();c.arc(32*u,34*u,5*u,.2*Math.PI,.8*Math.PI);c.stroke();
+}
+function renderCard(){
+  const box=$('#hcCard');box.innerHTML='';const d=document.createElement('div');d.className='hcc';
+  const hc=P.hc.exact,left=Math.max(0,HC_CARDS-P.hc.cards.length),b=brand();
+  d.innerHTML='<div class="hctop"><canvas width="128" height="128" aria-label="Your golfer"></canvas><div class="who"><b></b><small></small></div><div class="hc"><span>Handicap</span><b></b><small></small></div></div><div class="grid"></div><div class="troph"></div>';
+  drawFace(d.querySelector('canvas').getContext('2d'),128);
+  d.querySelector('.who b').textContent=AV.name||'Player';
+  d.querySelector('.who small').textContent=`Level ${P.lvl}${b?' · '+b.name:''}`;
+  d.querySelector('.hc b').textContent=hc==null?'–':Math.round(hc)<0?'+'+Math.abs(Math.round(hc)):Math.round(hc);
+  d.querySelector('.hc small').textContent=hc==null?`${left} round${left===1?'':'s'} to go`:`Exact ${fmtHc(hc)} · Cat ${hcCat(hc)}`;
+  const cells=[['Rounds',P.rounds],['Holes',ST('holes')],['Best 9',P.stats.bestGross??'–'],['Best pts',P.stats.bestStab??'–'],['Birdies',ST('birdies')],['Eagles',ST('eagles')],['Chip-ins',ST('chipins')],['Best putt',ST('longPutt')?ST('longPutt')+' ft':'–']];
+  const g=d.querySelector('.grid');cells.forEach(([k,v])=>{const c=document.createElement('div');c.innerHTML='<b></b><span></span>';c.children[0].textContent=v;c.children[1].textContent=k;g.appendChild(c)});
+  const t=d.querySelector('.troph');TROPHIES.forEach(([n,f])=>{const sp=document.createElement('span');sp.textContent=n;if(f())sp.className='got';t.appendChild(sp)});
+  box.appendChild(d);
+}
+
 /* ---------- leaderboard (shared through the artifact's database; each player writes only their own row) ---------- */
 let DB=null,USR=null,UID=null,lbUnsub=null,LB=[];
 (async()=>{try{if(!window.claude||!claude.use)return;USR=await claude.use('user');DB=await claude.use('db');UID=USR?await USR.id():null;if(!UID)DB=null}catch(e){DB=null}})();
@@ -938,7 +1020,7 @@ const hasBest=()=>Object.keys(P.bests).length>0;
 async function pushScore(){
   if(!DB||!UID||!hasBest())return;
   const b=brand(),c={};for(const k in P.bests)c[k]={toPar:P.bests[k].toPar,strokes:P.bests[k].strokes};
-  try{await DB.doc('lb/'+UID).set({nick:(AV.name&&AV.name!=='Player'?AV.name:'').slice(0,16),c,lvl:P.lvl,rounds:P.rounds,brand:b?b.name:'',at:Date.now()})}catch(e){}
+  try{await DB.doc('lb/'+UID).set({nick:(AV.name&&AV.name!=='Player'?AV.name:'').slice(0,16),c,lvl:P.lvl,hcp:P.hc.exact,rounds:P.rounds,brand:b?b.name:'',at:Date.now()})}catch(e){}
 }
 let lbCourse='links',lbNames=null;
 function renderLB(){
@@ -956,7 +1038,7 @@ function renderLB(){
     const nm=(typeof d.nick==='string'&&d.nick)||(lbNames&&lbNames[r.id]&&lbNames[r.id].name)||'Golfer';
     tr.innerHTML='<td></td><td><span></span><small></small></td><td class="r"></td><td class="r"></td>';
     tr.children[0].textContent=i+1;tr.querySelector('span').textContent=nm;
-    tr.querySelector('small').textContent=`${Number(d.rounds)||0} rounds${typeof d.brand==='string'&&d.brand?' · '+d.brand:''}`;
+    tr.querySelector('small').textContent=`${typeof d.hcp==='number'?'Hcp '+fmtHc(d.hcp)+' · ':''}${Number(d.rounds)||0} rounds${typeof d.brand==='string'&&d.brand?' · '+d.brand:''}`;
     tr.children[2].textContent=`${fmtPar(r.toPar)} (${r.strokes||'–'})`;tr.children[3].textContent=Number(d.lvl)||0;t.appendChild(tr)});
   body.appendChild(t);
   const need=rows.map(r=>r.id).filter(id=>!lbNames||!(id in lbNames));
@@ -1041,7 +1123,7 @@ function buildSwatches(){
   document.querySelectorAll('.sw[data-k]').forEach(box=>{const k=box.dataset.k;box.innerHTML='';
     PAL[k].forEach((col,i)=>{const b=document.createElement('button');b.setAttribute('aria-label',`${k} option ${i+1}`);b.setAttribute('aria-pressed',AV[k]===i);
       if(col)b.style.background=col;else b.textContent='–';
-      b.onclick=()=>{AV[k]=i;saveAv();buildSwatches()};box.appendChild(b)})});
+      b.onclick=()=>{AV[k]=i;saveAv();buildSwatches();renderCard()};box.appendChild(b)})});
   const bs=$('#ballSw');bs.innerHTML='';
   BALLS.forEach((B,i)=>{const b=document.createElement('button');b.setAttribute('aria-label',B.name);b.title=B.name;b.setAttribute('aria-pressed',String((AV.ball|0)===i));
     b.style.background=B.stripe?`linear-gradient(${B.base} 0 58%,${B.stripe} 58% 70%,${B.base} 70%)`:B.base;
@@ -1069,13 +1151,10 @@ $('#spreadBtn').onclick=()=>{let i=0,guard=0;while(P.sp>0&&guard<500){const k=ST
 document.querySelectorAll('#handSeg button').forEach(b=>b.onclick=()=>{AV.lefty=+b.dataset.l;saveAv();buildSwatches()});
 $('#pName').oninput=e=>{AV.name=e.target.value.trim()||'Player';saveAv();updateLvl()};
 let setFrom=null;
-function openPlayer(){setFrom=!$('#menuSheet').hidden?'menu':null;closeSheets();$('#lvlRange').value=P.lvl;$('#rangeVal').textContent=P.lvl;$('#pName').value=AV.name==='Player'?'':AV.name;$('#pName').placeholder='Player';$('#resetBtn').textContent='Reset progress';delete $('#resetBtn').dataset.armed;buildSwatches();buildSkills();$('#setSheet').hidden=false}
+function openPlayer(){setFrom=!$('#menuSheet').hidden?'menu':null;closeSheets();$('#pName').value=AV.name==='Player'?'':AV.name;$('#pName').placeholder='Player';$('#resetBtn').textContent='Reset progress';delete $('#resetBtn').dataset.armed;buildSwatches();buildSkills();renderCard();$('#setSheet').hidden=false}
 $('#lvlBtn').onclick=()=>{if(G&&(G.state==='meter'||G.state==='fly'))return;openPlayer()};
-$('#lvlRange').oninput=e=>{$('#rangeVal').textContent=e.target.value};
 const clearStats=()=>STATS.forEach(s=>P.st[s[0]]=0);
-$('#applyLvl').onclick=()=>{P.lvl=+$('#lvlRange').value;P.xp=0;clearStats();P.sp=P.lvl*SP_PER_LVL;save();buildSkills();toast(`Level ${P.lvl} · ${P.sp} skill points to spend`,'')};
-$('#resetPrac').onclick=()=>{P.prac={date:'',done:{}};save();toast('Practice area reopened for testing','')};
-$('#resetBtn').onclick=e=>{const b=e.currentTarget;if(b.dataset.armed){P.lvl=0;P.xp=0;P.sp=0;clearStats();P.gear=null;P.bests={};P.rounds=0;P.prac={date:'',done:{}};save();R=null;saveR();delete b.dataset.armed;startHole(0);openMenu()}else{b.dataset.armed=1;b.textContent='Tap again to reset to level 0'}};
+$('#resetBtn').onclick=e=>{const b=e.currentTarget;if(b.dataset.armed){P.lvl=0;P.xp=0;P.sp=0;clearStats();P.gear=null;P.bests={};P.rounds=0;P.day={date:'',holes:0};P.hc={cards:[],exact:null,last:null};P.stats={};P.prac={date:'',done:{}};save();R=null;saveR();delete b.dataset.armed;startHole(0);openMenu()}else{b.dataset.armed=1;b.textContent='Tap again to reset to level 0'}};
 $('#closeSet').onclick=()=>{$('#setSheet').hidden=true;if(G&&G.state==='aim'){newRead();setDefaults()}updateUI();if(setFrom==='menu'||!G||G.state==='done'||(G.mode==='round'&&!R))openMenu()};
 
 /* ---------- avatar: side-on, facing the ball ---------- */
