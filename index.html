@@ -159,7 +159,7 @@ input[type=range]{width:100%;accent-color:var(--flag)}
 .lbtab tr.me td{background:var(--track);color:var(--flag)}
 .lbtab td small{display:block;color:var(--muted);font-size:11px}
 .avtop{display:flex;gap:14px;align-items:center}
-.avtop canvas{width:96px;height:110px;border-radius:10px;background:var(--track);flex:none}
+.avtop canvas{width:120px;height:150px;border-radius:12px;background:radial-gradient(circle at 50% 35%,#24402f,#0a1510 75%);flex:none}
 .avtop label{flex:1;display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--muted);min-width:0}
 .avtop input{height:42px;border-radius:8px;border:1px solid var(--line);background:var(--track);color:var(--ink);font:inherit;font-weight:600;padding:0 10px;-webkit-user-select:text;user-select:text;width:100%}
 .opt{display:flex;flex-direction:column;gap:6px}
@@ -292,7 +292,7 @@ input[type=range]{width:100%;accent-color:var(--flag)}
         <h2 style="font-size:32px">Player</h2>
         <div id="hcCard"></div>
         <div class="avtop">
-          <canvas id="avPrev" width="192" height="220"></canvas>
+          <canvas id="avPrev" width="240" height="300" aria-label="Your golfer"></canvas>
           <label for="pName">Name<input id="pName" maxlength="16" autocomplete="off"></label>
         </div>
         <div class="opt"><h3>Skin</h3><div class="sw" data-k="skin"></div></div>
@@ -1007,16 +1007,115 @@ const ST=k=>P.stats[k]||0;
 const TROPHIES=[['First par',()=>ST('pars')>=1],['First birdie',()=>ST('birdies')>=1],['Eagle',()=>ST('eagles')>=1],['Hole in one',()=>ST('hio')>=1],
   ['Chip-in',()=>ST('chipins')>=1],['25 ft putt',()=>ST('longPutt')>=25],['Broke 50',()=>P.stats.bestGross!=null&&P.stats.bestGross<50],['Broke 40',()=>P.stats.bestGross!=null&&P.stats.bestGross<40],
   ['Level par round',()=>ST('parRounds')>=1],['Handicap',()=>P.hc.exact!=null],['Single figures',()=>P.hc.exact!=null&&P.hc.exact<9.5],['Practice gold',()=>ST('golds')>=1]];
+/* ---------- portrait kit: semi-real cartoon golfer, cap carries your club sponsor's logo ---------- */
+const shade=(hex,f)=>{const n=parseInt(hex.slice(1),16);let r=n>>16,g=n>>8&255,b=n&255;
+  if(f<0){r*=1+f;g*=1+f;b*=1+f}else{r+=(255-r)*f;g+=(255-g)*f;b+=(255-b)*f}return`rgb(${r|0},${g|0},${b|0})`};
+// club logos: original marks for each (fictional) maker, drawn to sit on a cap front or a shirt chest
+const LOGOS={
+  lz:(c,u)=>{c.fillStyle='#f3c534';c.strokeStyle='#1d1a06';c.lineWidth=.9*u;c.beginPath();c.moveTo(-5*u,-4*u);c.lineTo(5*u,-4*u);c.lineTo(-1*u,4*u);c.lineTo(5*u,4*u);c.stroke();c.beginPath();c.arc(-5*u,-4*u,1.3*u,0,7);c.fill()},
+  persimmon:(c,u)=>{c.fillStyle='#8a5a2b';c.beginPath();c.arc(0,0,6*u,0,7);c.fill();c.strokeStyle='#e8c897';c.lineWidth=.8*u;for(const r of [2,3.6,5]){c.beginPath();c.arc(.6*u,.4*u,r*u,0,7);c.stroke()}c.fillStyle='#fff';c.font=`700 ${6*u}px Georgia,serif`;c.textAlign='center';c.textBaseline='middle';c.fillText('P',0,.4*u)},
+  hippa:(c,u)=>{c.fillStyle='#2f8f5b';c.beginPath();c.ellipse(0,1*u,7*u,4.6*u,0,0,7);c.fill();c.beginPath();c.arc(-4*u,-3*u,1.6*u,0,7);c.arc(4*u,-3*u,1.6*u,0,7);c.fill();c.fillStyle='#fff';c.font=`800 ${4.6*u}px "Barlow Condensed",sans-serif`;c.textAlign='center';c.textBaseline='middle';c.fillText('HIPPA',0,1.3*u)},
+  uskidz:(c,u)=>{c.fillStyle='#c8352e';star(c,-2.5*u,0,5*u);c.fillStyle='#1f4fa3';star(c,3*u,1*u,3.6*u)},
+  meridyn:(c,u)=>{c.fillStyle='#1d3557';c.beginPath();c.arc(0,0,6*u,0,7);c.fill();c.fillStyle='#e63946';c.beginPath();c.moveTo(0,-5*u);c.lineTo(1.8*u,0);c.lineTo(-1.8*u,0);c.fill();c.fillStyle='#f1faee';c.beginPath();c.moveTo(0,5*u);c.lineTo(1.8*u,0);c.lineTo(-1.8*u,0);c.fill()},
+  dunlap:(c,u)=>{c.fillStyle='#111';c.fillRect(-7*u,-4*u,14*u,8*u);c.fillStyle='#ffd60a';c.font=`900 ${6.5*u}px "Barlow Condensed",sans-serif`;c.textAlign='center';c.textBaseline='middle';c.fillText('DL',0,.5*u)},
+  wilsen:(c,u)=>{c.strokeStyle='#e85d04';c.lineWidth=2*u;c.lineJoin='round';c.beginPath();c.moveTo(-6*u,-3.5*u);c.lineTo(-3*u,4*u);c.lineTo(0,-1*u);c.lineTo(3*u,4*u);c.lineTo(6*u,-3.5*u);c.stroke()},
+  slazinger:(c,u)=>{c.fillStyle='#0b7a75';c.beginPath();c.moveTo(1.5*u,-6*u);c.lineTo(-4*u,1*u);c.lineTo(-.5*u,1*u);c.lineTo(-1.5*u,6*u);c.lineTo(4*u,-1*u);c.lineTo(.5*u,-1*u);c.closePath();c.fill()},
+  cobro:(c,u)=>{c.fillStyle='#ff7b00';c.beginPath();c.moveTo(0,-6*u);c.lineTo(6.5*u,5*u);c.lineTo(-6.5*u,5*u);c.closePath();c.fill();c.fillStyle='#111';c.beginPath();c.arc(-2*u,1.5*u,1*u,0,7);c.arc(2*u,1.5*u,1*u,0,7);c.fill()},
+  mizuna:(c,u)=>{c.strokeStyle='#1565c0';c.lineWidth=1.8*u;c.lineCap='round';for(const dy of [-2.5,1.5]){c.beginPath();c.moveTo(-6*u,dy*u);c.bezierCurveTo(-3*u,(dy-3)*u,0,(dy+3)*u,6*u,dy*u);c.stroke()}},
+  srixen:(c,u)=>{c.fillStyle='#d62828';c.beginPath();c.moveTo(0,-6*u);c.lineTo(6*u,0);c.lineTo(0,6*u);c.lineTo(-6*u,0);c.closePath();c.fill();c.strokeStyle='#fff';c.lineWidth=1.3*u;c.beginPath();c.moveTo(-2.4*u,-2.4*u);c.lineTo(2.4*u,2.4*u);c.moveTo(2.4*u,-2.4*u);c.lineTo(-2.4*u,2.4*u);c.stroke()},
+  pong:(c,u)=>{c.strokeStyle='#111';c.lineWidth=1.3*u;c.beginPath();c.arc(0,0,6*u,0,7);c.stroke();c.fillStyle='#111';[[-3,2],[0,-1],[3,2]].forEach(([x,y],i)=>{c.beginPath();c.arc(x*u,y*u,(1+i*.25)*u,0,7);c.fill()})},
+  taylermaid:(c,u)=>{c.fillStyle='#111';c.fillRect(-6*u,-5*u,12*u,2.6*u);c.fillRect(-1.3*u,-5*u,2.6*u,10*u);c.strokeStyle='#e63946';c.lineWidth=1*u;c.setLineDash([1.4*u,1.2*u]);c.beginPath();c.moveTo(-6*u,6*u);c.lineTo(6*u,6*u);c.stroke();c.setLineDash([])},
+  kallaway:(c,u)=>{c.strokeStyle='#5a189a';c.lineWidth=2.2*u;c.lineJoin='miter';c.beginPath();c.moveTo(-4*u,-6*u);c.lineTo(-4*u,6*u);c.moveTo(5*u,-6*u);c.lineTo(-3*u,0);c.lineTo(5*u,6*u);c.stroke()},
+  titlust:(c,u)=>{c.fillStyle='#b8860b';c.font=`italic 700 ${11*u}px Georgia,serif`;c.textAlign='center';c.textBaseline='middle';c.fillText('T',0,.6*u);c.strokeStyle='#b8860b';c.lineWidth=.8*u;c.beginPath();c.moveTo(-6*u,5.5*u);c.quadraticCurveTo(0,3.5*u,6*u,5.5*u);c.stroke()}};
+function star(c,x,y,r){c.beginPath();for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5,rr=i%2?r*.45:r;c.lineTo(x+Math.cos(a)*rr,y+Math.sin(a)*rr)}c.closePath();c.fill()}
+function drawLogo(c,x,y,u,bg){const b=brand(),k=b?b.id:'lz';c.save();c.translate(x,y);
+  if(bg){c.fillStyle='rgba(255,255,255,.92)';c.beginPath();c.ellipse(0,0,8.2*u,7*u,0,0,7);c.fill()}
+  (LOGOS[k]||LOGOS.lz)(c,u);c.restore()}
+// a head at (cx,cy) with radius R: shaded skin, ears, eyes with whites and catchlights, brows, nose, smile, hair or a proper cap
+function drawHead(c,cx,cy,R){
+  const col=k=>PAL[k][AV[k]],sk=col('skin'),hair=col('hair'),hat=col('hat');
+  c.save();
+  // neck
+  c.fillStyle=shade(sk,-.18);c.beginPath();c.roundRect(cx-R*.36,cy+R*.55,R*.72,R*.75,R*.2);c.fill();
+  // ears
+  for(const sd of [-1,1]){c.fillStyle=sk;c.beginPath();c.ellipse(cx+sd*R*.86,cy+R*.08,R*.17,R*.26,0,0,7);c.fill();c.fillStyle=shade(sk,-.2);c.beginPath();c.ellipse(cx+sd*R*.88,cy+R*.1,R*.08,R*.15,0,0,7);c.fill()}
+  // back hair (shows below a cap too)
+  if(!hat||true){c.fillStyle=hair;c.beginPath();c.ellipse(cx,cy-R*.12,R*.9,R*.88,0,Math.PI*.95,Math.PI*2.05);c.fill()}
+  // face
+  const g=c.createRadialGradient(cx-R*.3,cy-R*.35,R*.1,cx,cy,R*1.05);g.addColorStop(0,shade(sk,.12));g.addColorStop(.7,sk);g.addColorStop(1,shade(sk,-.16));
+  c.fillStyle=g;c.beginPath();c.ellipse(cx,cy+R*.02,R*.82,R*.95,0,0,7);c.fill();
+  // cheeks
+  c.fillStyle='rgba(220,90,80,.16)';for(const sd of [-1,1]){c.beginPath();c.ellipse(cx+sd*R*.45,cy+R*.32,R*.17,R*.11,0,0,7);c.fill()}
+  // hair fringe when bareheaded
+  if(!hat){c.fillStyle=hair;c.beginPath();c.moveTo(cx-R*.84,cy-R*.05);c.quadraticCurveTo(cx-R*.9,cy-R*1.02,cx,cy-R*1.02);c.quadraticCurveTo(cx+R*.92,cy-R*1.0,cx+R*.84,cy-R*.1);
+    c.quadraticCurveTo(cx+R*.5,cy-R*.62,cx+R*.05,cy-R*.5);c.quadraticCurveTo(cx-R*.4,cy-R*.62,cx-R*.84,cy-R*.05);c.fill()}
+  // brows
+  c.strokeStyle=shade(hair,-.1);c.lineWidth=R*.09;c.lineCap='round';
+  for(const sd of [-1,1]){c.beginPath();c.moveTo(cx+sd*R*.15,cy-R*.24);c.quadraticCurveTo(cx+sd*R*.33,cy-R*.33,cx+sd*R*.5,cy-R*.24);c.stroke()}
+  // eyes
+  for(const sd of [-1,1]){const ex=cx+sd*R*.32,ey=cy-R*.05;
+    c.fillStyle='#fbfbf7';c.beginPath();c.ellipse(ex,ey,R*.15,R*.11,0,0,7);c.fill();
+    c.fillStyle='#5a3a22';c.beginPath();c.arc(ex+sd*R*.01,ey+R*.01,R*.085,0,7);c.fill();
+    c.fillStyle='#120c08';c.beginPath();c.arc(ex+sd*R*.01,ey+R*.01,R*.045,0,7);c.fill();
+    c.fillStyle='#fff';c.beginPath();c.arc(ex-R*.025,ey-R*.03,R*.025,0,7);c.fill();
+    c.strokeStyle=shade(sk,-.35);c.lineWidth=R*.03;c.beginPath();c.ellipse(ex,ey,R*.15,R*.11,0,Math.PI*1.05,Math.PI*1.95);c.stroke()}
+  // nose
+  c.strokeStyle=shade(sk,-.28);c.lineWidth=R*.045;c.beginPath();c.moveTo(cx+R*.02,cy+R*.02);c.quadraticCurveTo(cx+R*.1,cy+R*.26,cx-R*.04,cy+R*.3);c.stroke();
+  // smile
+  c.strokeStyle='#8c3b32';c.lineWidth=R*.055;c.beginPath();c.moveTo(cx-R*.24,cy+R*.5);c.quadraticCurveTo(cx,cy+R*.66,cx+R*.24,cy+R*.5);c.stroke();
+  c.fillStyle='rgba(255,255,255,.75)';c.beginPath();c.moveTo(cx-R*.18,cy+R*.53);c.quadraticCurveTo(cx,cy+R*.62,cx+R*.18,cy+R*.53);c.quadraticCurveTo(cx,cy+R*.57,cx-R*.18,cy+R*.53);c.fill();
+  // cap: six-panel crown sitting on the brow, curved peak, sponsor logo on the front panel
+  if(hat){
+    const crown=c.createLinearGradient(cx,cy-R*1.2,cx,cy-R*.25);crown.addColorStop(0,shade(hat,.12));crown.addColorStop(1,shade(hat,-.12));
+    c.fillStyle=crown;c.beginPath();c.moveTo(cx-R*.95,cy-R*.2);c.bezierCurveTo(cx-R*.98,cy-R*1.25,cx+R*.98,cy-R*1.25,cx+R*.95,cy-R*.2);
+    c.quadraticCurveTo(cx,cy-R*.36,cx-R*.95,cy-R*.2);c.fill();
+    c.strokeStyle=shade(hat,-.25);c.lineWidth=R*.03;for(const sx of [-.45,.45]){c.beginPath();c.moveTo(cx+sx*R*.5,cy-R*1.0);c.quadraticCurveTo(cx+sx*R*1.2,cy-R*.6,cx+sx*R*1.5,cy-R*.26);c.stroke()}
+    c.fillStyle=shade(hat,-.15);c.beginPath();c.arc(cx,cy-R*1.02,R*.07,0,7);c.fill();
+    // peak with underside shadow on the forehead
+    c.fillStyle='rgba(0,0,0,.18)';c.beginPath();c.ellipse(cx,cy-R*.13,R*.78,R*.13,0,0,Math.PI);c.fill();
+    c.fillStyle=shade(hat,-.2);c.beginPath();c.moveTo(cx-R*.92,cy-R*.22);c.quadraticCurveTo(cx,cy+R*.02,cx+R*.92,cy-R*.22);c.quadraticCurveTo(cx,cy-R*.12,cx-R*.92,cy-R*.22);c.fill();
+    c.fillStyle=shade(hat,.06);c.beginPath();c.moveTo(cx-R*.9,cy-R*.24);c.quadraticCurveTo(cx,cy-R*.05,cx+R*.9,cy-R*.24);c.quadraticCurveTo(cx,cy-R*.3,cx-R*.9,cy-R*.24);c.fill();
+    drawLogo(c,cx,cy-R*.64,R*.036,true);
+  }
+  c.restore();
+}
+// head-and-shoulders for the handicap card
 function drawFace(c,N){
-  const col=k=>PAL[k][AV[k]];c.clearRect(0,0,N,N);const u=N/64;
-  c.fillStyle=col('shirt');c.beginPath();c.ellipse(32*u,70*u,28*u,18*u,0,0,7);c.fill();
-  c.fillStyle=col('skin');c.fillRect(27*u,38*u,10*u,10*u);c.beginPath();c.arc(32*u,30*u,14*u,0,7);c.fill();
-  c.beginPath();c.arc(18.5*u,31*u,3*u,0,7);c.arc(45.5*u,31*u,3*u,0,7);c.fill();
-  const hat=col('hat');
-  if(hat){c.fillStyle=hat;c.beginPath();c.arc(32*u,27*u,14.5*u,Math.PI*1.02,-.02*Math.PI);c.fill();c.beginPath();c.ellipse(32*u,25.5*u,18*u,4*u,0,Math.PI,0);c.fill();c.fillRect(17*u,24*u,30*u,3*u)}
-  else{c.fillStyle=col('hair');c.beginPath();c.arc(32*u,27*u,14.5*u,Math.PI*1.05,-.05*Math.PI);c.fill()}
-  c.fillStyle='#1b1b1b';c.beginPath();c.arc(27*u,31*u,1.6*u,0,7);c.arc(37*u,31*u,1.6*u,0,7);c.fill();
-  c.strokeStyle='rgba(60,25,15,.8)';c.lineWidth=1.4*u;c.lineCap='round';c.beginPath();c.arc(32*u,34*u,5*u,.2*Math.PI,.8*Math.PI);c.stroke();
+  const col=k=>PAL[k][AV[k]],sh=col('shirt');c.clearRect(0,0,N,N);
+  const bg=c.createRadialGradient(N*.5,N*.35,N*.05,N*.5,N*.5,N*.7);bg.addColorStop(0,'#2c5a3d');bg.addColorStop(1,'#0c1a12');c.fillStyle=bg;c.fillRect(0,0,N,N);
+  // shoulders and polo collar
+  const sg=c.createLinearGradient(0,N*.7,0,N);sg.addColorStop(0,shade(sh,.08));sg.addColorStop(1,shade(sh,-.2));
+  c.fillStyle=sg;c.beginPath();c.ellipse(N*.5,N*1.04,N*.48,N*.32,0,0,7);c.fill();
+  c.fillStyle=shade(sh,-.12);for(const sd of [-1,1]){c.beginPath();c.moveTo(N*.5,N*.8);c.lineTo(N*(.5+sd*.17),N*.72);c.lineTo(N*(.5+sd*.13),N*.86);c.closePath();c.fill()}
+  drawHead(c,N*.5,N*.5,N*.31);
+}
+// standing, front-on portrait for the player sheet (no club)
+function drawPortrait(c,W_,H_){
+  const col=k=>PAL[k][AV[k]],sk=col('skin'),sh=col('shirt'),tr=col('trousers'),cx=W_/2,u=H_/300;
+  c.clearRect(0,0,W_,H_);
+  c.fillStyle='rgba(0,0,0,.35)';c.beginPath();c.ellipse(cx,H_*.95,W_*.28,H_*.025,0,0,7);c.fill();
+  // shoes
+  for(const sd of [-1,1]){c.fillStyle='#f4f1e8';c.beginPath();c.ellipse(cx+sd*22*u,H_*.93,17*u,7*u,0,0,7);c.fill();c.fillStyle='#1b1b1b';c.fillRect(cx+sd*22*u-12*u,H_*.93,24*u,2.5*u)}
+  // trousers with crease and shade
+  const tg=c.createLinearGradient(cx-40*u,0,cx+40*u,0);tg.addColorStop(0,shade(tr,-.18));tg.addColorStop(.5,shade(tr,.06));tg.addColorStop(1,shade(tr,-.2));
+  c.fillStyle=tg;c.beginPath();c.moveTo(cx-38*u,162*u);c.lineTo(cx+38*u,162*u);c.lineTo(cx+36*u,272*u);c.lineTo(cx+8*u,272*u);c.lineTo(cx,190*u);c.lineTo(cx-8*u,272*u);c.lineTo(cx-36*u,272*u);c.closePath();c.fill();
+  c.strokeStyle='rgba(0,0,0,.18)';c.lineWidth=1.2*u;for(const sd of [-1,1]){c.beginPath();c.moveTo(cx+sd*21*u,175*u);c.lineTo(cx+sd*22*u,270*u);c.stroke()}
+  // belt
+  c.fillStyle='#1b1b1b';c.fillRect(cx-39*u,156*u,78*u,9*u);c.fillStyle='#c9ccd1';c.fillRect(cx-5*u,157*u,10*u,7*u);
+  // arms behind the torso
+  for(const sd of [-1,1]){const ag=c.createLinearGradient(cx+sd*45*u,0,cx+sd*62*u,0);ag.addColorStop(0,shade(sk,-.1));ag.addColorStop(1,shade(sk,-.25));
+    c.fillStyle=ag;c.beginPath();c.roundRect(cx+sd*52*u-8*u,100*u,16*u,74*u,8*u);c.fill();
+    c.fillStyle=sk;c.beginPath();c.ellipse(cx+sd*52*u,180*u,9*u,11*u,0,0,7);c.fill()}
+  // polo shirt: body, sleeves, collar, placket, logo on the chest
+  const pg=c.createLinearGradient(cx-50*u,0,cx+50*u,0);pg.addColorStop(0,shade(sh,-.16));pg.addColorStop(.45,shade(sh,.08));pg.addColorStop(1,shade(sh,-.2));
+  c.fillStyle=pg;c.beginPath();c.moveTo(cx-44*u,84*u);c.quadraticCurveTo(cx,76*u,cx+44*u,84*u);c.lineTo(cx+42*u,160*u);c.lineTo(cx-42*u,160*u);c.closePath();c.fill();
+  for(const sd of [-1,1]){c.fillStyle=shade(sh,-.06);c.beginPath();c.moveTo(cx+sd*40*u,84*u);c.quadraticCurveTo(cx+sd*58*u,88*u,cx+sd*62*u,118*u);c.lineTo(cx+sd*44*u,122*u);c.closePath();c.fill()}
+  c.fillStyle=shade(sh,-.22);for(const sd of [-1,1]){c.beginPath();c.moveTo(cx,92*u);c.lineTo(cx+sd*18*u,80*u);c.lineTo(cx+sd*14*u,97*u);c.closePath();c.fill()}
+  c.strokeStyle=shade(sh,-.3);c.lineWidth=1.2*u;c.beginPath();c.moveTo(cx,92*u);c.lineTo(cx,116*u);c.stroke();
+  c.fillStyle=shade(sh,.3);for(const y of [99,108]){c.beginPath();c.arc(cx+2.5*u,y*u,1.6*u,0,7);c.fill()}
+  drawLogo(c,cx-24*u,104*u,1.05*u,false);
+  // head
+  drawHead(c,cx,48*u,30*u);
 }
 function renderCard(){
   const box=$('#hcCard');box.innerHTML='';const d=document.createElement('div');d.className='hcc';
@@ -1545,20 +1644,13 @@ function draw(now){
 }
 
 const pv=$('#avPrev'),pctx=pv.getContext('2d');
-function drawPreview(now){
-  pctx.setTransform(1,0,0,1,0,0);pctx.clearRect(0,0,pv.width,pv.height);
-  const cyc=(now/2400)%1;let b,h;
-  if(cyc<.45){const u=cyc/.45;b=170*u;h=Math.min(70,b*.45)}else if(cyc<.6){const u=(cyc-.45)/.15,e=1-(1-u)**3;b=-170*e;h=70*e}else{b=-170;h=70}
-  const fx=AV.lefty?132:60;
-  drawAv(pctx,fx,200,2.6,b,h,false);
-  pctx.beginPath();pctx.arc(fx+(AV.lefty?-1:1)*AV_BALL*2.6,199,3.5,0,7);pctx.fillStyle='#fff';pctx.fill();
-}
+function drawPreview(){pctx.setTransform(1,0,0,1,0,0);drawPortrait(pctx,pv.width,pv.height)}
 
 function frame(now){
   if(G.state==='meter'){const per=G.club==='Putter'?1800:1500,t=((now-G.meterT0)/per)%1;G.meterP=t<.5?t*2:2-t*2;$('#needle').style.left=G.meterP*100+'%';$('#fill').style.width=G.meterP*100+'%'}
   updateCam();const bp=draw(now);
   if(G.anim&&bp.done&&now-G.anim.t0>350)settle();
-  if(!$('#setSheet').hidden){drawPreview(now);const bc=$('#ballPrev'),bx=bc.getContext('2d');bx.clearRect(0,0,160,160);
+  if(!$('#setSheet').hidden){drawPreview();const bc=$('#ballPrev'),bx=bc.getContext('2d');bx.clearRect(0,0,160,160);
     bx.fillStyle='rgba(0,0,0,.3)';bx.beginPath();bx.ellipse(86,140,46,10,0,0,7);bx.fill();drawBall(bx,80,78,58,Math.sin(now/1400)*.5)}
   requestAnimationFrame(frame);
 }
