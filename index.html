@@ -397,8 +397,8 @@ const P={lvl:0,xp:0,sp:0,st:{},prac:{date:'',done:{}},gear:null,bests:{},rounds:
   if(s.prac&&s.prac.done)P.prac=s.prac;
   if(s.gear&&BRANDS.some(b=>b.id===s.gear.id))P.gear=s.gear;if(s.bests&&typeof s.bests==='object')P.bests=s.bests;else if(s.best)P.bests.links=s.best;P.rounds=s.rounds|0;if(s.day)P.day=s.day;if(s.hc&&Array.isArray(s.hc.cards))P.hc=s.hc;if(s.stats)P.stats=s.stats})();
 const save=()=>ls.set('lzg',P);
-// XP to the next level: ~150 XP a day (a round plus the four practice challenges) puts a new player on level 4 after about 5 days
-const need=l=>120+40*l+5*l*l;
+// XP to the next level: tuned by simulation so a player who does all 18 holes and all four practice challenges every day reaches level 4 on about day 5
+const need=l=>Math.round(3.4*(120+40*l+5*l*l)/5)*5;
 const sk=()=>Math.min(1,P.lvl/50);
 const brand=()=>P.gear?BRANDS.find(b=>b.id===P.gear.id):null;
 const gfx=k=>{const b=brand();return b&&b.fx[k]||0};
@@ -525,16 +525,16 @@ const dCL=(p,h=H)=>dPoly(p,h.cl);
 const kAt=(e,th)=>{let k=1;if(e._w)for(const [n,a,p] of e._w)k+=a*Math.sin(n*th+p);return k};
 function inE(p,e,k=1){const dx=(p.x-e.x)/e.rx,dy=(p.y-e.y)/e.ry;return Math.hypot(dx,dy)<=k*kAt(e,Math.atan2(dy,dx))}
 function wobble(e,seed,amp){let s=seed*7919+13;const r=()=>{s=(s*16807)%2147483647;return s/2147483647};e._w=[[2,amp*(.5+r()*.5),r()*6.28],[3,amp*.7*(.4+r()*.6),r()*6.28],[5,amp*.35*r(),r()*6.28]]}
+const underTree=(p,h=H)=>!!h._tg&&h._tg.has((Math.floor(p.x/2)+5000)*10000+(Math.floor(p.y/2)+5000));
 function lieAt(p){
   if(inE(p,H.green))return'green';
   if(H.bunkers.some(e=>inE(p,e))||(H.sand||[]).some(b=>dPoly(p,b.pts)<=b.w))return'bunker';
   if(inE(p,H.green,1.3))return'fringe';
   if((H.obZones||[]).some(e=>inE(p,e)))return'ob';
   if(H.water.some(e=>inE(p,e)))return'water';
-  if((H.clumps||[]).some(([x,y,r])=>Math.hypot(p.x-x,p.y-y)<=r))return'trees';
+  if(underTree(p))return'trees';
   if(H.fw.length>1&&dPoly(p,H.fw)<=H.fwW)return'fairway';
   if(H._obPoly&&!inPoly(p,H._obPoly))return'ob';
-  if(dCL(p)>H.treeD)return'trees';
   return'rough';
 }
 // distance past the out-of-bounds line (positive = OB); the line can sit closer on one side
@@ -584,6 +584,8 @@ function prep(h,seed){
   for(let x=x0;x<=x1;x+=10)for(let y=y0;y<=y1;y+=10){const p={x:x+r()*8,y:y+r()*8},d=dCL(p,h);
     if(d>h.treeD+5&&Math.hypot(p.x,p.y)>14&&!inE(p,h.green,2.4)&&!h.water.some(e=>inE(p,e,1.3))&&!h.bunkers.some(e=>inE(p,e,1.6))&&!(h.obZones||[]).some(e=>inE(p,e,1.1))&&r()<.85)h._trees.push({...p,r:(d<h.treeD+12?4:5)+r()*4})}
   for(const [cx,cy,cr] of h.clumps||[])for(let x=cx-cr;x<=cx+cr;x+=5.5)for(let y=cy-cr;y<=cy+cr;y+=5.5){const p={x:x+r()*3,y:y+r()*3};if(Math.hypot(p.x-cx,p.y-cy)<=cr*.85)h._trees.push({...p,r:3.5+r()*2.5})}
+  // canopy map: 2-yard cells covered by a drawn tree, so the lie matches what you see
+  h._tg=new Set();for(const t of h._trees){const rr=t.r*.9;for(let x=Math.floor((t.x-rr)/2);x<=Math.floor((t.x+rr)/2);x++)for(let y=Math.floor((t.y-rr)/2);y<=Math.floor((t.y+rr)/2);y++)if(Math.hypot(x*2+1-t.x,y*2+1-t.y)<=rr)h._tg.add((x+5000)*10000+(y+5000))}
   // out-of-bounds line
   buildOB(h);
   h._terr=[];if(h.elev||h.hills){const L=[];for(let z=-30;z<=30;z+=1.5)L.push(z+.01);contour((x,y)=>terrain({x,y},h),x0,y0,Math.ceil((x1-x0)/4),Math.ceil((y1-y0)/4),4,L,h._terr)}
