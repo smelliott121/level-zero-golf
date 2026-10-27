@@ -80,6 +80,7 @@ button.chip{color:var(--ink)}
 .pick .v b{display:block;font-family:var(--display);font-size:18px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;font-variant-numeric:tabular-nums;white-space:nowrap}
 
 .meter{position:relative;height:40px;border-radius:6px;background:#06100a;border:1px solid #2f5a3f;overflow:hidden}
+.meter canvas#meterCv{position:absolute;inset:0;width:100%;height:100%;z-index:3}
 .meter .fill{position:absolute;top:0;bottom:0;left:0;background:linear-gradient(90deg,transparent,rgba(243,197,52,.22));width:0}
 .meter .zone{position:absolute;top:0;bottom:0;background:#35c862;border-left:2px solid #d9ffe3;border-right:2px solid #d9ffe3;transition:left .25s,width .25s}
 .meter .sweet{position:absolute;top:0;bottom:0;background:#fff3a0;transition:left .25s,width .25s}
@@ -175,6 +176,8 @@ input[type=range]{width:100%;accent-color:var(--flag)}
 .ts-word{margin:4px 0 0;display:flex;flex-direction:column;align-items:center;line-height:.9}
 .ts-sgs{position:relative;font-family:"Cormorant Garamond",Georgia,serif;font-style:italic;font-weight:700;font-size:78px;letter-spacing:.02em;color:#f2c94c;
   text-shadow:0 -1px 0 #fff3c4,0 1px 0 #a77a1f,0 2px 0 #8a6416,0 4px 0 #0b1a12,0 8px 16px rgba(0,0,0,.6);animation:tsIn .7s .15s both}
+.ts-sgs-cv{width:280px;max-width:100%;height:96px;animation:tsIn .7s .15s both}
+.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .ts-cc{display:flex;align-items:center;gap:10px;margin-top:4px;font-family:var(--display);font-weight:600;font-size:15px;letter-spacing:.5em;text-transform:uppercase;color:#efe6cc;padding-left:.5em;animation:tsIn .7s .3s both}
 .ts-cc::before,.ts-cc::after{content:"";width:28px;height:1px;background:#c9a24a}
 .ts-est{margin:6px 0 0;font-family:"Cormorant Garamond",Georgia,serif;font-style:italic;font-size:15px;color:#c9a24a;letter-spacing:.12em;animation:tsIn .7s .4s both}
@@ -332,7 +335,8 @@ input[type=range]{width:100%;accent-color:var(--flag)}
     <div class="sheet title-screen" id="menuSheet" hidden>
       <div class="ts">
         <header class="ts-brand">
-          <svg class="ts-crest" viewBox="0 0 120 132" aria-hidden="true">
+          <img class="ts-crest" id="tsCrest" alt="" width="64" height="70">
+          <template id="crestSvg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 132" aria-hidden="true">
             <defs><linearGradient id="tsGold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff3c4"/><stop offset=".45" stop-color="#e2b84a"/><stop offset=".55" stop-color="#a77a1f"/><stop offset="1" stop-color="#f0cf72"/></linearGradient></defs>
             <path d="M60 4 L110 18 V62 C110 96 88 116 60 128 C32 116 10 96 10 62 V18 Z" fill="#123222" stroke="#e2b84a" stroke-width="5"/>
             <path d="M60 14 L101 25 V62 C101 90 83 107 60 117 C37 107 19 90 19 62 V25 Z" fill="none" stroke="#e2b84a" stroke-width="1.2" opacity=".7"/>
@@ -341,8 +345,8 @@ input[type=range]{width:100%;accent-color:var(--flag)}
             <line x1="60" y1="30" x2="60" y2="84" stroke="#f4f1e8" stroke-width="2"/>
             <path d="M60 30 L78 36 L60 42 Z" fill="#c8352e"/>
             <circle cx="60" cy="90" r="6" fill="#fff"/>
-          </svg>
-          <h1 class="ts-word"><span class="ts-sgs">S·G·S</span><span class="ts-cc">Country Club</span></h1>
+          </svg></template>
+          <h1 class="ts-word"><canvas class="ts-sgs-cv" id="tsWord" aria-hidden="true"></canvas><span class="vh">S·G·S</span><span class="ts-cc">Country Club</span></h1>
           <p class="ts-est"><span>Est.</span> MMXXVI</p>
         </header>
 
@@ -473,6 +477,7 @@ input[type=range]{width:100%;accent-color:var(--flag)}
       </div>
     </div>
     <div class="meter" id="meter">
+      <canvas id="meterCv" aria-hidden="true"></canvas>
       <div class="fill" id="fill"></div>
       <div class="zone" id="zone"></div>
       <div class="sweet" id="sweet" hidden></div>
@@ -1067,7 +1072,7 @@ function openMenu(soft){
    $('#tsShopSub').textContent=b?`${b.name} staff · ${P.gear.left>0?P.gear.left+' rounds left on contract':'contract up, offers waiting'}`:pend?'Sponsor offers are waiting':`Hand-me-down clubs${nx?` · first offers at level ${nx.lvl}`:''}`}
   $('#tsShop').onclick=()=>openGear();
   $('#tsPractice').onclick=()=>{const w=$('#pracWrap');w.hidden=!w.hidden;$('#tsPractice').setAttribute('aria-expanded',String(!w.hidden))};
-  startTips();
+  startTips();paintBrand();
   const sameRound=R&&R.c===pickCourse;if(sameRound&&!(G&&G.mode==='round'))useCourse(R.c);
   const inRound=sameRound&&R.scores.length>0;
   const newRound=()=>{if(!canStartRound()){toast('You have played your 18 holes today. Back tomorrow.','bad');return}useCourse(pickCourse);R={c:CUR,i:0,scores:[]};saveR();closeSheets();startHole(0)};
@@ -1091,6 +1096,19 @@ function openMenu(soft){
   $('#menuClose').hidden=!(G&&G.state!=='done'&&(G.mode==='practice'||R));
   $('#menuSheet').hidden=false;
 }
+function paintBrand(){
+  const im=$('#tsCrest');if(im&&!im.src){const t=$('#crestSvg');im.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(t.innerHTML)}
+  const cv=$('#tsWord');if(!cv)return;const dpr=Math.min(3,devicePixelRatio||1),w=280,h=96;cv.width=w*dpr;cv.height=h*dpr;
+  const x=cv.getContext('2d');x.setTransform(dpr,0,0,dpr,0,0);x.clearRect(0,0,w,h);
+  x.font='italic 700 78px "Cormorant Garamond",Georgia,serif';x.textAlign='center';x.textBaseline='alphabetic';const tx=w/2,ty=74;
+  x.fillStyle='rgba(0,0,0,.55)';x.filter='blur(6px)';x.fillText('S·G·S',tx,ty+8);x.filter='none';
+  x.fillStyle='#0b1a12';x.fillText('S·G·S',tx,ty+4);
+  x.fillStyle='#8a6416';x.fillText('S·G·S',tx,ty+2);
+  x.fillStyle='#fff3c4';x.fillText('S·G·S',tx,ty-1);
+  const g=x.createLinearGradient(0,ty-62,0,ty+6);g.addColorStop(0,'#fff7d6');g.addColorStop(.38,'#f0cf72');g.addColorStop(.52,'#b8862a');g.addColorStop(.64,'#e9c463');g.addColorStop(1,'#fff1bd');
+  x.fillStyle=g;x.fillText('S·G·S',tx,ty);
+}
+try{document.fonts&&document.fonts.ready.then(()=>{if(!$('#menuSheet').hidden)paintBrand()})}catch(e){}
 const TIPS=['Stop the needle in the green and you will never shank it.','Inside 3 ft on the green is a gimme.','The perfect-pace sliver shrinks on putts over 15 ft.',
   'Club rule: 18 holes a day. Make them count.','Six rounds earns you a handicap. Then the club competitions open.','White stakes are out of bounds: one shot and replay.',
   'Wind is strongest on Bayview Heath. Check the flag before you swing.','Uphill putts need more pace. The window moves for you.','Sponsors notice good golfers. Keep levelling up.',
@@ -2010,9 +2028,28 @@ function draw(now){
 const pv=$('#avPrev'),pctx=pv.getContext('2d');
 function drawPreview(){pctx.setTransform(1,0,0,1,0,0);drawPortrait(pctx,pv.width,pv.height)}
 
+// paints the meter: dark track, gold fill to the needle, green window, pale sweet spot for putts, red full line, labels, needle
+function drawMeter(){
+  const cv=$('#meterCv');if(!cv||!G)return;const r=cv.getBoundingClientRect();if(!r.width)return;
+  const dpr=Math.min(3,devicePixelRatio||1),W_=Math.round(r.width*dpr),H_=Math.round(r.height*dpr);
+  if(cv.width!==W_||cv.height!==H_){cv.width=W_;cv.height=H_}
+  const x=cv.getContext('2d');x.setTransform(dpr,0,0,dpr,0,0);const w=r.width,h=r.height;
+  x.clearRect(0,0,w,h);x.fillStyle='#06100a';x.fillRect(0,0,w,h);
+  const putt=G.club==='Putter',zw=zoneHalf(),zc=zoneC(),z0=Math.max(0,zc-zw),z1=Math.min(1,zc+zw);
+  const pos=G.state==='meter'?G.meterP:G.stop;
+  if(pos!=null){const g=x.createLinearGradient(0,0,pos*w,0);g.addColorStop(0,'rgba(243,197,52,0)');g.addColorStop(1,'rgba(243,197,52,.28)');x.fillStyle=g;x.fillRect(0,0,pos*w,h)}
+  x.fillStyle='#35c862';x.fillRect(z0*w,0,(z1-z0)*w,h);
+  x.fillStyle='#d9ffe3';x.fillRect(z0*w,0,2,h);x.fillRect(z1*w-2,0,2,h);
+  if(putt){const sf=sweetFrac();x.fillStyle='#fff3a0';x.fillRect((zc-zw*sf)*w,0,zw*sf*2*w,h)}
+  const fl=w/OVER;x.fillStyle='rgba(147,171,152,.85)';x.fillRect(fl,0,1,h);
+  x.font='600 11px "Barlow Condensed","Arial Narrow",sans-serif';x.textBaseline='middle';x.fillStyle='#93ab98';
+  x.fillText('SOFT',8,h/2+.5);x.fillText('FULL',fl+5,h/2+.5);
+  if(pos!=null&&G.state!=='aim'&&G.state!=='done'){const hit=Math.abs(pos-zc)<=zw,perfect=putt&&G.stop!=null&&Math.abs(pos-zc)<=zw*sweetFrac();
+    x.fillStyle=G.stop==null?'#f3c534':perfect?'#ffffff':hit?'#eaffef':'#f07a5f';x.fillRect(pos*w-2,0,4,h)}
+}
 function frame(now){
   if(G.state==='meter'){const per=G.club==='Putter'?1800:1500,t=((now-G.meterT0)/per)%1;G.meterP=t<.5?t*2:2-t*2;$('#needle').style.left=G.meterP*100+'%';$('#fill').style.width=G.meterP*100+'%'}
-  updateCam();const bp=draw(now);
+  drawMeter();updateCam();const bp=draw(now);
   if(G.anim&&bp.done&&now-G.anim.t0>350)settle();
   if(!$('#setSheet').hidden){drawPreview();const bc=$('#ballPrev'),bx=bc.getContext('2d');bx.clearRect(0,0,160,160);
     bx.fillStyle='rgba(0,0,0,.3)';bx.beginPath();bx.ellipse(86,140,46,10,0,0,7);bx.fill();drawBall(bx,80,78,58,Math.sin(now/1400)*.5)}
