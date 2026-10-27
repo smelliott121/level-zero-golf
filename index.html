@@ -144,9 +144,13 @@ input[type=range]{width:100%;accent-color:var(--flag)}
 .brand{display:flex;flex-direction:column;gap:6px;padding:12px;border-radius:10px;border:1px solid var(--line);background:var(--track)}
 .brand.locked{opacity:.5}
 .brand.cur{border-color:var(--flag)}
-.brand .bh{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.brand .bh{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.brand .bl{display:flex;align-items:center;gap:10px;min-width:0}
+.brand .bl canvas{width:40px;height:40px;flex:none}
+.brand canvas.set{width:100%;height:auto;aspect-ratio:720/260;max-width:100%;border-radius:8px;background:linear-gradient(180deg,#1c3626,#2d5a3d 70%,#3d7a4f)}
+.brand .bx{font-size:12px;color:var(--muted);text-align:right}
 .brand .bh b{font-family:var(--display);font-size:20px;text-transform:uppercase;letter-spacing:.04em}
-.brand .bh span{font-size:12px;color:var(--muted);white-space:nowrap}
+.brand .bh>.bx{white-space:nowrap}
 .brand p{margin:0;color:var(--muted);font-size:13px;line-height:1.35}
 .fx{display:flex;flex-wrap:wrap;gap:5px}
 .fx span{font-size:12px;font-weight:600;padding:2px 7px;border-radius:4px;background:var(--panel);font-variant-numeric:tabular-nums}
@@ -397,8 +401,9 @@ const P={lvl:0,xp:0,sp:0,st:{},prac:{date:'',done:{}},gear:null,bests:{},rounds:
   if(s.prac&&s.prac.done)P.prac=s.prac;
   if(s.gear&&BRANDS.some(b=>b.id===s.gear.id))P.gear=s.gear;if(s.bests&&typeof s.bests==='object')P.bests=s.bests;else if(s.best)P.bests.links=s.best;P.rounds=s.rounds|0;if(s.day)P.day=s.day;if(s.hc&&Array.isArray(s.hc.cards))P.hc=s.hc;if(s.stats)P.stats=s.stats})();
 const save=()=>ls.set('lzg',P);
-// XP to the next level: tuned by simulation so a player who does all 18 holes and all four practice challenges every day reaches level 4 on about day 5
-const need=l=>Math.round(3.4*(120+40*l+5*l*l)/5)*5;
+// XP to the next level, tuned by simulating full daily play (all 18 holes + all four practice challenges):
+// level 4 around day 5, level 10 around day 20-23, then each level takes about a week (level 15 around day 60)
+const need=l=>l<4?Math.round(3.4*(120+40*l+5*l*l)/5)*5:l<10?1200+100*(l-4):3500+600*(l-10);
 const sk=()=>Math.min(1,P.lvl/50);
 const brand=()=>P.gear?BRANDS.find(b=>b.id===P.gear.id):null;
 const gfx=k=>{const b=brand();return b&&b.fx[k]||0};
@@ -955,7 +960,68 @@ function renderGearNow(){
   if(b){d.querySelector('b').textContent=b.name;d.querySelector('small').textContent=P.gear.left>0?`Contract: ${P.gear.left} round${P.gear.left>1?'s':''} left before you can switch`:'Contract up. You are free to sign elsewhere.';d.querySelector('.gi').appendChild(fxChips(b.fx))}
   else{d.querySelector('b').textContent='No clubs yet';d.querySelector('small').textContent='Pick a starter set before your first round.'}
   if(unlocked&&(!b||P.gear.left===0))d.querySelector('small').textContent+=` ${unlocked} better deal${unlocked>1?'s':''} available.`;
+  {const nx=BRANDS.find(x=>x.lvl>P.lvl);if(nx)d.querySelector('small').textContent+=` Next deals at level ${nx.lvl}.`}
   d.querySelector('button').onclick=()=>openGear();box.appendChild(d);
+}
+const CLUBLOOK={
+  persimmon:{wood:1,crown:'#7a3f17',accent:'#e8c897',iron:'blade',putter:'blade',shaft:'steel',grip:'#3b2a1a',size:.9},
+  hippa:{crown:'#2f8f5b',accent:'#2f8f5b',iron:'oversize',putter:'mallet',shaft:'steel',grip:'#1f1f1f',size:1.12},
+  uskidz:{crown:'#c8352e',accent:'#1f4fa3',iron:'cavity',putter:'blade',shaft:'#1f4fa3',grip:'#c8352e',size:.78},
+  meridyn:{crown:'#1d3557',accent:'#e63946',iron:'cavity',putter:'heeltoe',shaft:'steel',grip:'#1d3557',size:.95},
+  dunlap:{crown:'#151515',accent:'#ffd60a',iron:'cavity',putter:'heeltoe',shaft:'steel',grip:'#151515',size:1},
+  wilsen:{crown:'#262626',accent:'#e85d04',iron:'blade',putter:'blade',shaft:'steel',grip:'#262626',size:.96},
+  slazinger:{crown:'#0b7a75',accent:'#0b7a75',iron:'cavity',putter:'mallet',shaft:'#0b7a75',grip:'#1a1a1a',size:1.04},
+  cobro:{crown:'#ff7b00',accent:'#ff7b00',iron:'cavity',putter:'mallet',shaft:'#1a1a1a',grip:'#ff7b00',size:1.1},
+  mizuna:{crown:'#1b1f2a',accent:'#1565c0',iron:'blade',putter:'blade',shaft:'steel',grip:'#1b1f2a',size:.98,satin:1},
+  srixen:{crown:'#2b2b2b',accent:'#d62828',iron:'cavity',putter:'heeltoe',shaft:'#d62828',grip:'#2b2b2b',size:1.02},
+  pong:{crown:'#1a1a1a',accent:'#f3c534',iron:'oversize',putter:'mallet',shaft:'steel',grip:'#1a1a1a',size:1.08},
+  taylermaid:{crown:'#f2f2f2',accent:'#e63946',iron:'cavity',putter:'mallet',shaft:'#1a1a1a',grip:'#1a1a1a',size:1.1},
+  kallaway:{crown:'#232323',accent:'#5a189a',iron:'cavity',putter:'heeltoe',shaft:'#5a189a',grip:'#232323',size:1.05},
+  titlust:{crown:'#111111',accent:'#b8860b',iron:'blade',putter:'blade',shaft:'steel',grip:'#111111',size:.98,satin:1}};
+// a set of four clubs at address (driver, 7 iron, wedge, putter), drawn in the maker's style
+function drawClubSet(c,W_,H_,id){
+  const L=CLUBLOOK[id]||CLUBLOOK.dunlap;c.clearRect(0,0,W_,H_);c.lineCap='round';c.lineJoin='round';
+  const steel=(x0,x1)=>{const g=c.createLinearGradient(x0,0,x1,0);g.addColorStop(0,'#7d848c');g.addColorStop(.35,'#eef1f4');g.addColorStop(.6,'#b8bec5');g.addColorStop(1,'#6b727a');return g};
+  const chrome=(y0,y1,sat)=>{const g=c.createLinearGradient(0,y0,0,y1);if(sat){g.addColorStop(0,'#c9ced3');g.addColorStop(.5,'#a7adb4');g.addColorStop(1,'#7a8188')}else{g.addColorStop(0,'#f5f7f9');g.addColorStop(.45,'#c3c9cf');g.addColorStop(.55,'#9aa1a8');g.addColorStop(1,'#d9dde1')}return g};
+  const slots=4,sw=W_/slots,base=H_*.86;
+  for(let k=0;k<slots;k++){
+    const x=sw*k+sw*(k===0?.7:.62),hh=H_*.2*L.size,top=H_*.06;
+    // shaft and grip
+    const hosel={x:x+sw*.06,y:base-hh*(k===0?.95:.9)};
+    c.strokeStyle=L.shaft==='steel'?steel(hosel.x-3,hosel.x+3):L.shaft;c.lineWidth=Math.max(2,W_*.006);
+    c.beginPath();c.moveTo(hosel.x+sw*.08,top+H_*.2);c.lineTo(hosel.x,hosel.y);c.stroke();
+    c.strokeStyle=L.grip;c.lineWidth=Math.max(4,W_*.014);c.beginPath();c.moveTo(hosel.x+sw*.11,top);c.lineTo(hosel.x+sw*.08,top+H_*.2);c.stroke();
+    c.strokeStyle=L.accent;c.lineWidth=Math.max(1.5,W_*.004);c.beginPath();c.moveTo(hosel.x+sw*.104,top+H_*.05);c.lineTo(hosel.x+sw*.096,top+H_*.09);c.stroke();
+    if(k===0){ // driver: rounded head, coloured crown, face, sole
+      const w=sw*.56*L.size,h=hh*1.05,x0=hosel.x-w;
+      c.fillStyle=chrome(base-h,base,L.satin);c.beginPath();c.moveTo(hosel.x,hosel.y);c.bezierCurveTo(hosel.x-w*.2,base-h*.95,x0-w*.05,base-h*.95,x0,base-h*.45);c.bezierCurveTo(x0+w*.02,base,hosel.x-w*.15,base+h*.02,hosel.x+w*.02,base-h*.12);c.closePath();c.fill();
+      const cg=c.createLinearGradient(0,base-h,0,base-h*.4);
+      if(L.wood){cg.addColorStop(0,shade(L.crown,.25));cg.addColorStop(1,shade(L.crown,-.2))}else{cg.addColorStop(0,shade(L.crown,.3));cg.addColorStop(.6,L.crown);cg.addColorStop(1,shade(L.crown,-.25))}
+      c.fillStyle=cg;c.beginPath();c.moveTo(hosel.x,hosel.y);c.bezierCurveTo(hosel.x-w*.2,base-h*.95,x0-w*.05,base-h*.95,x0,base-h*.45);c.quadraticCurveTo(x0+w*.5,base-h*.62,hosel.x,hosel.y);c.closePath();c.fill();
+      if(L.wood){c.strokeStyle='rgba(255,220,170,.35)';c.lineWidth=1;for(let i=1;i<5;i++){c.beginPath();c.moveTo(x0+w*.1,base-h*(.5+i*.08));c.quadraticCurveTo(x0+w*.5,base-h*(.75+i*.04),hosel.x-w*.1,base-h*(.8+i*.03));c.stroke()}
+        c.fillStyle='#d4cfc4';c.beginPath();c.ellipse(x0+w*.55,base-h*.3,w*.22,h*.16,0,0,7);c.fill()}
+      else{c.strokeStyle=L.accent;c.lineWidth=Math.max(1.5,W_*.004);c.beginPath();c.moveTo(x0+w*.2,base-h*.62);c.quadraticCurveTo(x0+w*.55,base-h*.74,hosel.x-w*.12,base-h*.82);c.stroke()}
+      c.strokeStyle='rgba(0,0,0,.25)';c.lineWidth=1;for(let i=0;i<4;i++){c.beginPath();c.moveTo(x0+w*.3,base-h*(.18+i*.07));c.lineTo(hosel.x-w*.12,base-h*(.18+i*.07));c.stroke()}
+    }else if(k===1||k===2){ // iron and wedge
+      const big=L.iron==='oversize'?1.18:L.iron==='blade'?.88:1,w=sw*.55*big*L.size,h=hh*(k===2?1.08:.92)*big,x0=hosel.x-w,lean=k===2?.14:.06;
+      const head=()=>{c.beginPath();c.moveTo(hosel.x,hosel.y);c.lineTo(hosel.x-w*.12,base-h*.25);c.quadraticCurveTo(hosel.x-w*.3,base+h*.02,x0+w*.15,base);c.quadraticCurveTo(x0-w*.04,base-h*.1,x0+w*lean,base-h*(L.iron==='blade'?.95:1.02));c.quadraticCurveTo(x0+w*.6,base-h*.8,hosel.x-w*.08,base-h*.38);c.closePath()};
+      head();c.fillStyle=chrome(base-h,base,L.satin);c.fill();
+      c.save();head();c.clip();
+      c.strokeStyle='rgba(0,0,0,.28)';c.lineWidth=1;const n=k===2?8:6;for(let i=0;i<n;i++){const yy=base-h*(.15+i*.09);c.beginPath();c.moveTo(x0+w*(.18+i*.015),yy);c.lineTo(hosel.x-w*.2,yy);c.stroke()}
+      if(L.iron!=='blade'){c.fillStyle=shade(L.accent,-.05);c.beginPath();c.ellipse(x0+w*.48,base-h*.32,w*.24,h*.13,-.1,0,7);c.fill();c.fillStyle='rgba(255,255,255,.3)';c.beginPath();c.ellipse(x0+w*.44,base-h*.36,w*.12,h*.04,-.1,0,7);c.fill()}
+      else{c.strokeStyle=L.accent;c.lineWidth=Math.max(1.2,W_*.003);c.beginPath();c.moveTo(x0+w*.3,base-h*.1);c.lineTo(hosel.x-w*.25,base-h*.08);c.stroke()}
+      c.fillStyle='rgba(0,0,0,.18)';c.fillRect(x0-w*.1,base-h*.08,w*1.3,h*.1);c.restore();
+      c.fillStyle='rgba(0,0,0,.6)';c.font=`700 ${Math.max(9,H_*.07)}px "Barlow Condensed",sans-serif`;c.textAlign='center';c.fillText(k===1?'7':'56°',x0+w*.68,base-h*.58);
+    }else{ // putter
+      const w=sw*.62*L.size,x0=hosel.x-w*.9;
+      if(L.putter==='mallet'){const h=hh*.55;c.fillStyle=chrome(base-h,base,L.satin);c.beginPath();c.moveTo(x0,base);c.lineTo(x0+w,base);c.quadraticCurveTo(x0+w*1.05,base-h,x0+w*.5,base-h*1.05);c.quadraticCurveTo(x0-w*.05,base-h,x0,base);c.fill();
+        c.fillStyle=L.accent;c.beginPath();c.ellipse(x0+w*.5,base-h*.5,w*.18,h*.2,0,0,7);c.fill();c.strokeStyle='#fff';c.lineWidth=1.5;c.beginPath();c.moveTo(x0+w*.5,base-h*.95);c.lineTo(x0+w*.5,base-h*.75);c.stroke()}
+      else if(L.putter==='heeltoe'){const h=hh*.42;c.fillStyle=chrome(base-h,base,L.satin);c.beginPath();c.roundRect(x0,base-h,w,h,h*.25);c.fill();
+        c.fillStyle='rgba(0,0,0,.22)';c.beginPath();c.roundRect(x0+w*.22,base-h*.75,w*.56,h*.45,h*.2);c.fill();c.fillStyle=L.accent;c.fillRect(x0+w*.47,base-h,w*.06,h*.25)}
+      else{const h=hh*.32;c.fillStyle=chrome(base-h,base,L.satin);c.beginPath();c.roundRect(x0,base-h,w,h,h*.3);c.fill();c.fillStyle=L.accent;c.fillRect(x0+w*.48,base-h,w*.04,h*.3)}
+      c.strokeStyle=L.shaft==='steel'?steel(hosel.x-3,hosel.x+3):L.shaft;c.lineWidth=Math.max(2,W_*.006);c.beginPath();c.moveTo(hosel.x,hosel.y);c.quadraticCurveTo(hosel.x-w*.05,base-hh*.4,x0+w*.85,base-hh*.3);c.stroke()}
+    c.fillStyle='rgba(0,0,0,.28)';c.beginPath();c.ellipse(sw*k+sw*.38,base+H_*.03,sw*.32,H_*.025,0,0,7);c.fill();
+  }
 }
 function openGear(){
   closeSheets();const b=brand(),locked=b&&P.gear.left>0;
@@ -964,8 +1030,10 @@ function openGear(){
   BRANDS.forEach(x=>{
     if(x.lvl!==tier){tier=x.lvl;const h=document.createElement('p');h.className='tierh';h.textContent=tier===0?'Starter sets':`Level ${tier} deals`;list.appendChild(h)}
     const c=document.createElement('div');const isCur=b&&b.id===x.id,lockedLvl=P.lvl<x.lvl;c.className='brand'+(lockedLvl?' locked':'')+(isCur?' cur':'');
-    c.innerHTML='<div class="bh"><b></b><span></span></div><p></p>';
-    c.querySelector('b').textContent=x.name;c.querySelector('.bh span').textContent=x.sign?`+${x.sign} XP to sign · +${x.round} XP a round`:`+${x.round} XP a round`;
+    c.innerHTML='<div class="bh"><span class="bl"><canvas width="96" height="96" aria-hidden="true"></canvas><b></b></span><span class="bx"></span></div><canvas class="set" width="720" height="260" aria-label="The clubs"></canvas><p></p>';
+    c.querySelector('b').textContent=x.name;
+    {const lc=c.querySelector('.bl canvas').getContext('2d');lc.fillStyle='#f4f4f0';lc.beginPath();lc.arc(48,48,46,0,7);lc.fill();drawLogo(lc,48,48,5.2,false,x.id);
+     drawClubSet(c.querySelector('canvas.set').getContext('2d'),720,260,x.id)}c.querySelector('.bx').textContent=x.sign?`+${x.sign} XP to sign · +${x.round} XP a round`:`+${x.round} XP a round`;
     c.querySelector('p').textContent=x.blurb;c.appendChild(fxChips(x.fx));
     const btn=document.createElement('button');btn.className='btn';
     if(isCur){btn.textContent='Your clubs';btn.disabled=true}
@@ -1030,7 +1098,7 @@ const LOGOS={
   kallaway:(c,u)=>{c.strokeStyle='#5a189a';c.lineWidth=2.2*u;c.lineJoin='miter';c.beginPath();c.moveTo(-4*u,-6*u);c.lineTo(-4*u,6*u);c.moveTo(5*u,-6*u);c.lineTo(-3*u,0);c.lineTo(5*u,6*u);c.stroke()},
   titlust:(c,u)=>{c.fillStyle='#b8860b';c.font=`italic 700 ${11*u}px Georgia,serif`;c.textAlign='center';c.textBaseline='middle';c.fillText('T',0,.6*u);c.strokeStyle='#b8860b';c.lineWidth=.8*u;c.beginPath();c.moveTo(-6*u,5.5*u);c.quadraticCurveTo(0,3.5*u,6*u,5.5*u);c.stroke()}};
 function star(c,x,y,r){c.beginPath();for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5,rr=i%2?r*.45:r;c.lineTo(x+Math.cos(a)*rr,y+Math.sin(a)*rr)}c.closePath();c.fill()}
-function drawLogo(c,x,y,u,bg){const b=brand(),k=b?b.id:'lz';c.save();c.translate(x,y);
+function drawLogo(c,x,y,u,bg,id){const b=brand(),k=id||(b?b.id:'lz');c.save();c.translate(x,y);
   if(bg){c.fillStyle='rgba(255,255,255,.92)';c.beginPath();c.ellipse(0,0,8.2*u,7*u,0,0,7);c.fill()}
   (LOGOS[k]||LOGOS.lz)(c,u);c.restore()}
 // a head at (cx,cy), R = half the head height: sculpted face outline, layered shading, detailed features, hair strands or a stitched cap
