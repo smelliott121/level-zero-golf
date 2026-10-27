@@ -140,6 +140,27 @@ input[type=range]{width:100%;accent-color:var(--flag)}
 .gearnow .gi{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
 .gearnow b{font-family:var(--display);font-size:20px;text-transform:uppercase;letter-spacing:.04em}
 .gearnow small{color:var(--muted);font-size:12px;line-height:1.35}
+.scene{position:absolute;inset:0;z-index:8;display:flex;align-items:center;justify-content:center;padding:16px;background:radial-gradient(circle at 50% 38%,#2f6a45 0%,#10241a 55%,#060d09 100%);overflow:hidden}
+.scene canvas#sceneFx{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.sc-inner{position:relative;width:100%;max-width:380px;display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center}
+.sc-kick{margin:0;font-family:var(--display);font-size:15px;letter-spacing:.2em;text-transform:uppercase;color:var(--flag);animation:scIn .5s .1s both}
+.sc-title{margin:0;font-family:var(--display);font-size:42px;line-height:1;text-transform:uppercase;letter-spacing:.02em;text-wrap:balance;animation:scIn .6s .25s both}
+.sc-sub{margin:0;color:var(--muted);line-height:1.45;animation:scIn .6s .4s both}
+.sc-logos{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.sc-logos canvas{width:68px;height:68px;border-radius:50%;box-shadow:0 8px 24px rgba(0,0,0,.45);animation:scPop .55s cubic-bezier(.2,1.5,.4,1) both}
+.sc-env{position:relative;width:150px;height:96px;margin:6px 0 4px;animation:scIn .6s .55s both}
+.sc-env::before{content:"";position:absolute;inset:30px 0 0;background:#e9e2cf;border-radius:4px;box-shadow:0 10px 24px rgba(0,0,0,.4)}
+.sc-flap{position:absolute;left:0;right:0;top:30px;height:44px;background:#d8cfb6;clip-path:polygon(0 0,100% 0,50% 100%);transform-origin:top;animation:scFlap .6s 1s both;z-index:2}
+.sc-letter{position:absolute;left:14px;right:14px;top:34px;height:70px;background:#fffdf6;border-radius:3px;padding:8px;display:flex;flex-direction:column;gap:5px;align-items:flex-start;z-index:1;animation:scLetter .7s 1.4s both}
+.sc-letter b{font-family:var(--display);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#1d1a06}
+.sc-letter span{display:block;height:4px;width:100%;background:#d9d2c0;border-radius:2px}
+.sc-letter span.short{width:60%}
+.scene .btn{width:100%}
+@keyframes scIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@keyframes scPop{from{opacity:0;transform:scale(.3) rotate(-25deg)}to{opacity:1;transform:none}}
+@keyframes scFlap{from{transform:rotateX(0)}to{transform:rotateX(180deg);z-index:0}}
+@keyframes scLetter{from{transform:translateY(0)}to{transform:translateY(-34px)}}
+@media (prefers-reduced-motion:reduce){.sc-kick,.sc-title,.sc-sub,.sc-logos canvas,.sc-env,.sc-flap,.sc-letter{animation:none}}
 .tierh{font-family:var(--display);font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:var(--flag);margin:4px 0 0}
 .brand{display:flex;flex-direction:column;gap:6px;padding:12px;border-radius:10px;border:1px solid var(--line);background:var(--track)}
 .brand.locked{opacity:.5}
@@ -256,6 +277,19 @@ input[type=range]{width:100%;accent-color:var(--flag)}
         <p class="sub" id="pracSub"></p>
         <div class="prac" id="pracList"></div>
         <div class="btnrow"><button class="btn" id="menuPlayer">Player &amp; skills</button><button class="btn" id="menuClose">Back to play</button></div>
+      </div>
+    </div>
+
+    <div class="scene" id="dealScene" hidden>
+      <canvas id="sceneFx" aria-hidden="true"></canvas>
+      <div class="sc-inner">
+        <p class="sc-kick" id="scKick">Level 1</p>
+        <h2 class="sc-title" id="scTitle">You've got sponsor offers</h2>
+        <p class="sc-sub" id="scSub"></p>
+        <div class="sc-logos" id="scLogos"></div>
+        <div class="sc-env" aria-hidden="true"><div class="sc-flap"></div><div class="sc-letter"><b>Sponsorship offer</b><span></span><span></span><span class="short"></span></div></div>
+        <button class="btn main" id="scGo">See the offers</button>
+        <button class="btn" id="scLater">Later</button>
       </div>
     </div>
 
@@ -380,26 +414,27 @@ const SMAX=20, SP_PER_LVL=3;
    fx are skill points added on top of yours (out of 20); forgive cuts the chance of a mishit */
 const CONTRACT_ROUNDS=3; // one "major season" until majors exist
 const BRANDS=[
-  {id:'persimmon',name:'Persimmon Bros',lvl:0,blurb:'Proper wooden woods and steel shafts. Feels lovely, goes nowhere.',fx:{power:-3,accuracy:2},sign:0,round:5},
-  {id:'hippa',name:'Hippa',lvl:0,blurb:'Supermarket box set. Very forgiving, very short.',fx:{power:-2,forgive:3},sign:0,round:5},
-  {id:'uskidz',name:'US Kidz',lvl:0,blurb:'Built for juniors. Sweet little wedges, zero pop.',fx:{power:-4,short:3,accuracy:1},sign:0,round:5},
-  {id:'meridyn',name:'Meridyn',lvl:0,blurb:'Car boot bargain. Lovely putter, wild with the woods.',fx:{putting:3,driving:-2},sign:0,round:5},
-  {id:'dunlap',name:'Dunlap',lvl:3,blurb:'Solid club-pro favourite. Nothing flashy, nothing scary.',fx:{forgive:2,irons:1},sign:40,round:10},
-  {id:'wilsen',name:'Wilsen',lvl:3,blurb:'Old-school blades and a great flat stick.',fx:{short:2,putting:2,forgive:-1},sign:40,round:10},
-  {id:'slazinger',name:'Slazinger',lvl:3,blurb:'Straight-hitting game-improvement woods.',fx:{driving:2,accuracy:1,power:-1},sign:40,round:10},
+  {id:'persimmon',name:'Persimmon Bros',lvl:1,blurb:'Proper wooden woods and steel shafts. Feels lovely, goes nowhere.',fx:{power:-3,accuracy:2},sign:0,round:5},
+  {id:'hippa',name:'Hippa',lvl:1,blurb:'Supermarket box set. Very forgiving, very short.',fx:{power:-2,forgive:3},sign:0,round:5},
+  {id:'uskidz',name:'US Kidz',lvl:1,blurb:'Built for juniors. Sweet little wedges, zero pop.',fx:{power:-4,short:3,accuracy:1},sign:0,round:5},
+  {id:'meridyn',name:'Meridyn',lvl:1,blurb:'Car boot bargain. Lovely putter, wild with the woods.',fx:{putting:3,driving:-2},sign:0,round:5},
+  {id:'dunlap',name:'Dunlap',lvl:4,blurb:'Solid club-pro favourite. Nothing flashy, nothing scary.',fx:{forgive:2,irons:1},sign:40,round:10},
+  {id:'wilsen',name:'Wilsen',lvl:4,blurb:'Old-school blades and a great flat stick.',fx:{short:2,putting:2,forgive:-1},sign:40,round:10},
+  {id:'slazinger',name:'Slazinger',lvl:4,blurb:'Straight-hitting game-improvement woods.',fx:{driving:2,accuracy:1,power:-1},sign:40,round:10},
   {id:'cobro',name:'Cobro',lvl:8,blurb:'Loud colours, louder drives. Can go anywhere.',fx:{power:3,driving:2,accuracy:-1},sign:80,round:15},
   {id:'mizuna',name:'Mizuna',lvl:8,blurb:'Forged irons that reward a pure strike, punish a bad one.',fx:{irons:4,accuracy:2,forgive:-1},sign:80,round:15},
   {id:'srixen',name:'Srixen',lvl:8,blurb:'Well-rounded tour gear with a soft ball deal.',fx:{power:2,irons:2,short:1},sign:80,round:15},
   {id:'pong',name:'Pong',lvl:15,blurb:'Ugly-but-brilliant forgiveness, iconic putters.',fx:{forgive:4,putting:3,accuracy:1},sign:150,round:25},
   {id:'taylermaid',name:'TaylerMaid',lvl:15,blurb:'The bomber deal. Big woods, big money.',fx:{power:5,driving:3,forgive:-1},sign:150,round:25},
   {id:'kallaway',name:'Kallaway',lvl:15,blurb:'All-rounder staff bag with a great wedge line.',fx:{power:3,accuracy:2,short:2},sign:150,round:25},
-  {id:'titlust',name:'Titlust',lvl:25,blurb:'The tour staple. Precision everywhere, ego included.',fx:{irons:4,short:4,putting:3,accuracy:2,forgive:1},sign:300,round:40}];
+  {id:'titlust',name:'Titlust',lvl:30,blurb:'The tour staple. Precision everywhere, ego included.',fx:{irons:4,short:4,putting:3,accuracy:2,forgive:1},sign:300,round:40}];
+const DEAL_TIERS=[1,4,8,15,30];
 const FXN={power:'Power',accuracy:'Accuracy',driving:'Driving',irons:'Irons',short:'Short game',putting:'Putting',forgive:'Forgiveness'};
-const P={lvl:0,xp:0,sp:0,st:{},prac:{date:'',done:{}},gear:null,bests:{},rounds:0,day:{date:'',holes:0},hc:{cards:[],exact:null,last:null},stats:{}};STATS.forEach(s=>P.st[s[0]]=0);
+const P={dealsSeen:0,lvl:0,xp:0,sp:0,st:{},prac:{date:'',done:{}},gear:null,bests:{},rounds:0,day:{date:'',holes:0},hc:{cards:[],exact:null,last:null},stats:{}};STATS.forEach(s=>P.st[s[0]]=0);
 (()=>{const s=ls.get('lzg');if(!s)return;P.lvl=clamp(s.lvl|0,0,50);P.xp=Math.max(0,s.xp|0);
   if(s.st){STATS.forEach(k=>P.st[k[0]]=clamp(s.st[k[0]]|0,0,SMAX));P.sp=Math.max(0,s.sp|0)}else P.sp=P.lvl*SP_PER_LVL;
   if(s.prac&&s.prac.done)P.prac=s.prac;
-  if(s.gear&&BRANDS.some(b=>b.id===s.gear.id))P.gear=s.gear;if(s.bests&&typeof s.bests==='object')P.bests=s.bests;else if(s.best)P.bests.links=s.best;P.rounds=s.rounds|0;if(s.day)P.day=s.day;if(s.hc&&Array.isArray(s.hc.cards))P.hc=s.hc;if(s.stats)P.stats=s.stats})();
+  if(s.gear&&BRANDS.some(b=>b.id===s.gear.id))P.gear=s.gear;if(s.bests&&typeof s.bests==='object')P.bests=s.bests;else if(s.best)P.bests.links=s.best;P.rounds=s.rounds|0;P.dealsSeen=typeof s.dealsSeen==='number'?s.dealsSeen:(s.gear?Math.max(0,...DEAL_TIERS.filter(t=>t<=P.lvl)):0);if(s.day)P.day=s.day;if(s.hc&&Array.isArray(s.hc.cards))P.hc=s.hc;if(s.stats)P.stats=s.stats})();
 const save=()=>ls.set('lzg',P);
 // XP to the next level, tuned by simulating full daily play (all 18 holes + all four practice challenges):
 // level 4 around day 5, level 10 around day 20-23, then each level takes about a week (level 15 around day 60)
@@ -885,7 +920,7 @@ function finishChallenge(){
 }
 
 /* ---------- sheets ---------- */
-const SHEETS=['#endSheet','#menuSheet','#setSheet','#gearSheet','#lbSheet','#acctSheet'];
+const SHEETS=['#endSheet','#menuSheet','#setSheet','#gearSheet','#lbSheet','#acctSheet','#dealScene'];
 const sheetOpen=()=>SHEETS.some(s=>!$(s).hidden);
 function closeSheets(){SHEETS.forEach(s=>$(s).hidden=true)}
 // hide the scoreboard and swing console whenever a menu or card is up
@@ -930,12 +965,13 @@ function openMenu(){
   $('#courseBlurb').textContent=`${pc.blurb} 9 holes, par ${pcPar}.${pb?` Your best: ${fmtPar(pb.toPar)} (${pb.strokes}).`:''}${R&&R.c!==pickCourse?` Starting here ends your round at ${COURSES[R.c].name}.`:''} Holes today: ${holesToday()} of ${MAX_HOLES_DAY}.`;
   const sameRound=R&&R.c===pickCourse;if(sameRound&&!(G&&G.mode==='round'))useCourse(R.c);
   const inRound=sameRound&&R.scores.length>0;
-  const newRound=()=>{if(!P.gear){openGear();return}if(!canStartRound()){toast('You have played your 18 holes today. Back tomorrow.','bad');return}useCourse(pickCourse);R={c:CUR,i:0,scores:[]};saveR();closeSheets();startHole(0)};
+  const newRound=()=>{if(!canStartRound()){toast('You have played your 18 holes today. Back tomorrow.','bad');return}useCourse(pickCourse);R={c:CUR,i:0,scores:[]};saveR();closeSheets();startHole(0)};
   if(sameRound){mk(G&&G.mode==='round'&&G.state!=='done'?`Continue · Hole ${R.i+1}`:`Play hole ${R.i+1}`,'main',()=>{closeSheets();if(!(G&&G.mode==='round'&&H===COURSE[R.i]&&G.state!=='done')){useCourse(R.c);startHole(R.i)}});
     mk('New round','',newRound)}
-  else mk(!P.gear?'Pick your clubs to play':canStartRound()?'Play 9 holes':'18 holes played today','main',newRound);
+  else mk(canStartRound()?'Play 9 holes':'18 holes played today','main',newRound);
   if(!canStartRound()&&!sameRound)rb.lastChild.disabled=true;
   renderGearNow();renderAccount();
+  {const t=pendingTier();if(t){setTimeout(()=>{if(!$('#menuSheet').hidden&&pendingTier()===t)showDealScene(t)},250)}}
   $('#menuCard').innerHTML=inRound?scorecard(-1):'';$('#menuCard').hidden=!inRound;
   // practice
   const done=pracToday(),left=pracLeft(),midHole=G&&G.mode==='round'&&G.strokes>0&&G.state!=='done';
@@ -958,9 +994,9 @@ function renderGearNow(){
   const d=document.createElement('div');d.className='gearnow';d.innerHTML='<div class="gi"><b></b><small></small></div><button class="btn" style="height:40px;padding:0 14px">Deals</button>';
   const unlocked=BRANDS.filter(x=>x.lvl<=P.lvl&&x.lvl>0).length;
   if(b){d.querySelector('b').textContent=b.name;d.querySelector('small').textContent=P.gear.left>0?`Contract: ${P.gear.left} round${P.gear.left>1?'s':''} left before you can switch`:'Contract up. You are free to sign elsewhere.';d.querySelector('.gi').appendChild(fxChips(b.fx))}
-  else{d.querySelector('b').textContent='No clubs yet';d.querySelector('small').textContent='Pick a starter set before your first round.'}
+  else{d.querySelector('b').textContent='Hand-me-down clubs';d.querySelector('small').textContent=P.lvl<1?'No sponsor yet. The club makers start calling at level 1.':'No sponsor yet. Offers are waiting.'}
   if(unlocked&&(!b||P.gear.left===0))d.querySelector('small').textContent+=` ${unlocked} better deal${unlocked>1?'s':''} available.`;
-  {const nx=BRANDS.find(x=>x.lvl>P.lvl);if(nx)d.querySelector('small').textContent+=` Next deals at level ${nx.lvl}.`}
+  {const nx=BRANDS.find(x=>x.lvl>P.lvl);if(nx&&P.lvl>=1)d.querySelector('small').textContent+=` Next offers at level ${nx.lvl}.`}
   d.querySelector('button').onclick=()=>openGear();box.appendChild(d);
 }
 const CLUBLOOK={
@@ -1025,10 +1061,10 @@ function drawClubSet(c,W_,H_,id){
 }
 function openGear(){
   closeSheets();const b=brand(),locked=b&&P.gear.left>0;
-  $('#gearSub').textContent=!b?'Everyone starts on a bargain set. Each has its merits. Pick one to start your career.':locked?`You are signed to ${b.name} for ${P.gear.left} more round${P.gear.left>1?'s':''}. Contracts run for ${CONTRACT_ROUNDS} rounds, the length of one major season.`:`Your ${b.name} deal is up. Sign a new one and you are committed for ${CONTRACT_ROUNDS} rounds.`;
+  $('#gearSub').textContent=!b?(P.lvl<1?'Nobody wants to sponsor a level 0 golfer. Reach level 1 and the first offers arrive.':'Your first offers are in. Each set has its merits. Pick one to start your career.'):locked?`You are signed to ${b.name} for ${P.gear.left} more round${P.gear.left>1?'s':''}. Contracts run for ${CONTRACT_ROUNDS} rounds, the length of one major season.`:`Your ${b.name} deal is up. Sign a new one and you are committed for ${CONTRACT_ROUNDS} rounds.`;
   const list=$('#gearList');list.innerHTML='';let tier=-1;
   BRANDS.forEach(x=>{
-    if(x.lvl!==tier){tier=x.lvl;const h=document.createElement('p');h.className='tierh';h.textContent=tier===0?'Starter sets':`Level ${tier} deals`;list.appendChild(h)}
+    if(x.lvl!==tier){tier=x.lvl;const h=document.createElement('p');h.className='tierh';h.textContent=tier===1?'Level 1 · First offers':`Level ${tier} deals`;list.appendChild(h)}
     const c=document.createElement('div');const isCur=b&&b.id===x.id,lockedLvl=P.lvl<x.lvl;c.className='brand'+(lockedLvl?' locked':'')+(isCur?' cur':'');
     c.innerHTML='<div class="bh"><span class="bl"><canvas width="96" height="96" aria-hidden="true"></canvas><b></b></span><span class="bx"></span></div><canvas class="set" width="720" height="260" aria-label="The clubs"></canvas><p></p>';
     c.querySelector('b').textContent=x.name;
@@ -1046,6 +1082,36 @@ function openGear(){
   $('#gearSheet').hidden=false;
 }
 $('#gearClose').onclick=()=>openMenu();
+
+/* ---------- sponsor offer scene: shown on the home menu the first time a new tier of deals opens ---------- */
+let fxRun=null;
+function pendingTier(){const t=DEAL_TIERS.filter(x=>x<=P.lvl).pop();return t&&t>P.dealsSeen?t:0}
+function showDealScene(t){
+  closeSheets();const brands=BRANDS.filter(b=>b.lvl===t),first=t===DEAL_TIERS[0],last=t===DEAL_TIERS[DEAL_TIERS.length-1];
+  $('#scKick').textContent=`Level ${t} reached`;
+  $('#scTitle').textContent=first?"You've got sponsor offers":last?'The big one is calling':'New sponsor offers';
+  const names=brands.map(b=>b.name),list=names.length>1?names.slice(0,-1).join(', ')+' and '+names[names.length-1]:names[0];
+  $('#scSub').textContent=first?`The club makers have noticed you. ${list} want you in their clubs.`:last?`${list} want you on their staff. This is the tour deal.`:`${list} have been watching your game and want to talk.`;
+  const box=$('#scLogos');box.innerHTML='';
+  brands.forEach((b,i)=>{const cv=document.createElement('canvas');cv.width=cv.height=136;cv.style.animationDelay=(.7+i*.18)+'s';const x=cv.getContext('2d');
+    x.fillStyle='#f4f4f0';x.beginPath();x.arc(68,68,66,0,7);x.fill();drawLogo(x,68,68,7.4,false,b.id);cv.setAttribute('aria-label',b.name);box.appendChild(cv)});
+  const done=()=>{P.dealsSeen=t;save();fxRun=null};
+  $('#scGo').onclick=()=>{done();openGear()};
+  $('#scLater').onclick=()=>{done();openMenu()};
+  $('#dealScene').hidden=false;startConfetti(brands);
+}
+function startConfetti(brands){
+  const cv=$('#sceneFx'),r=cv.getBoundingClientRect(),dpr=Math.min(2,devicePixelRatio||1);cv.width=r.width*dpr;cv.height=r.height*dpr;const x=cv.getContext('2d');x.setTransform(dpr,0,0,dpr,0,0);
+  let reduce=false;try{reduce=matchMedia('(prefers-reduced-motion: reduce)').matches}catch(e){}
+  const cols=['#f3c534','#ffffff','#7bd88f',...brands.map(b=>(CLUBLOOK[b.id]||{}).accent||'#f3c534')];
+  const bits=Array.from({length:reduce?0:110},()=>({x:Math.random()*r.width,y:-20-Math.random()*r.height*.6,vx:(Math.random()-.5)*1.4,vy:1.4+Math.random()*2.2,a:Math.random()*6.28,va:(Math.random()-.5)*.25,w:5+Math.random()*6,h:3+Math.random()*4,c:cols[Math.random()*cols.length|0]}));
+  const id={};fxRun=id;
+  const tick=()=>{if(fxRun!==id||$('#dealScene').hidden)return;x.clearRect(0,0,r.width,r.height);
+    for(const b of bits){b.x+=b.vx+Math.sin(b.a)*.6;b.y+=b.vy;b.a+=b.va;if(b.y>r.height+20){b.y=-20;b.x=Math.random()*r.width}
+      x.save();x.translate(b.x,b.y);x.rotate(b.a);x.fillStyle=b.c;x.fillRect(-b.w/2,-b.h/2,b.w,b.h*Math.abs(Math.cos(b.a*1.3)));x.restore()}
+    requestAnimationFrame(tick)};
+  tick();
+}
 
 /* ---------- handicap: the old UK (CONGU) system, adapted to nine-hole cards ----------
    initial: after 54 holes (six 9-hole cards) the cards pair into three 18-hole cards; holes over par+2 count as par+2;
