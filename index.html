@@ -222,6 +222,9 @@ input[type=range]{width:100%;accent-color:var(--flag)}
   background:linear-gradient(180deg,rgba(5,12,8,.6),#050c08);border-top:1px solid rgba(201,162,74,.4);font-size:12.5px;color:#efe6cc;min-height:42px}
 .ts-tag{flex:none;font-family:var(--display);font-style:italic;font-weight:700;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#1d1a06;background:#c9a24a;padding:2px 8px;transform:skewX(-10deg)}
 #tsTip{flex:1;min-width:0;transition:opacity .4s}
+#menuSheet.ts-static .ts-crest,#menuSheet.ts-static .ts-sgs,#menuSheet.ts-static .ts-cc,#menuSheet.ts-static .ts-est,#menuSheet.ts-static .ts-player,#menuSheet.ts-static .ts-course,#menuSheet.ts-static .ts-item,#menuSheet.ts-static #roundBtns .btn{animation:none}
+#cName.swap,#cPar.swap{animation:tsSwap .3s ease-out}
+@keyframes tsSwap{from{opacity:0;transform:translateX(14px)}to{opacity:1;transform:none}}
 @keyframes tsIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 @keyframes tsDrop{from{opacity:0;transform:translateY(-16px) scale(.8)}to{opacity:1;transform:none}}
 @keyframes tsSlide{from{opacity:0;transform:skewX(-10deg) translateX(-24px)}to{opacity:1;transform:skewX(-10deg)}}
@@ -1045,13 +1048,14 @@ function scorecard(now){
 }
 const fmtPar=r=>r===0?'E':r>0?`+${r}`:`${r}`;
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
-function openMenu(){
-  closeSheets();
+function openMenu(soft){
+  // soft: refresh in place (changing course) without closing the screen or replaying the entrance
+  soft=soft===true&&!$('#menuSheet').hidden;if(!soft)closeSheets();$('#menuSheet').classList.toggle('ts-static',soft);
   const name=AV.name&&AV.name!=='Player'?AV.name:'Player';
   $('#menuSub').innerHTML='';$('#menuSub').append('Level ',Object.assign(document.createElement('b'),{textContent:P.lvl}),` · ${P.rounds} round${P.rounds===1?'':'s'}`,P.sp?` · ${P.sp} skill points to spend`:'');
   const rb=$('#roundBtns');rb.innerHTML='';
   const mk=(t,cls,fn)=>{const b=document.createElement('button');b.className='btn '+cls;b.textContent=t;b.onclick=fn;rb.appendChild(b)};
-  const ids=Object.keys(COURSES),pick=d=>{pickCourse=ids[(ids.indexOf(pickCourse)+d+ids.length)%ids.length];ls.set('lzg_course',pickCourse);openMenu()};
+  const ids=Object.keys(COURSES),pick=d=>{pickCourse=ids[(ids.indexOf(pickCourse)+d+ids.length)%ids.length];ls.set('lzg_course',pickCourse);openMenu(true);const cn=$('#cName');cn.classList.remove('swap');void cn.offsetWidth;cn.classList.add('swap')};
   $('#cPrev').onclick=()=>pick(-1);$('#cNext').onclick=()=>pick(1);
   const pc=COURSES[pickCourse],pcPar=pc.holes.reduce((a,h)=>a+h.par,0),pb=P.bests[pickCourse];
   $('#cName').textContent=pc.name;$('#cPar').textContent=`9 holes · Par ${pcPar}${pb?` · Best ${fmtPar(pb.toPar)}`:''}`;
