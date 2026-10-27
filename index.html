@@ -2019,7 +2019,12 @@ if(!R)useCourse(pickCourse);startHole(R?R.i:0);openMenu();requestAnimationFrame(
 
 <script>
 // installable app: cache the game so it opens offline on the course
-if('serviceWorker' in navigator){addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}))}
+if('serviceWorker' in navigator){
+  // when a new version finishes installing, reload once so players see it straight away
+  let reloaded=false;const had=!!navigator.serviceWorker.controller;
+  navigator.serviceWorker.addEventListener('controllerchange',()=>{if(had&&!reloaded){reloaded=true;location.reload()}});
+  addEventListener('load',()=>navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>{r.update();document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')r.update()})}).catch(()=>{}));
+}
 </script>
 </body>
 </html>

@@ -1,10 +1,10 @@
 // Level Zero Golf service worker: keeps the game playable offline.
 // Bump VERSION whenever index.html changes so phones pick up the update.
-const VERSION = 'lzg-v21';
+const VERSION = 'lzg-v22';
 const CORE = ['./', 'index.html', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-180.png', 'icons/maskable-512.png', 'vendor/supabase.js', 'vendor/591.supabase.js'];
 
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(VERSION).then(c => c.addAll(CORE)).then(() => self.skipWaiting()));
+  e.waitUntil(caches.open(VERSION).then(c => c.addAll(CORE.map(u => new Request(u, { cache: 'reload' })))).then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', e => {
@@ -18,7 +18,7 @@ self.addEventListener('fetch', e => {
   if (url.hostname.endsWith('supabase.co')) return;
   // the game page: try the network first so updates arrive, fall back to the cached copy offline
   if (req.mode === 'navigate') {
-    e.respondWith(fetch(req).then(r => { const copy = r.clone(); caches.open(VERSION).then(c => c.put('index.html', copy)); return r; })
+    e.respondWith(fetch(req, { cache: 'no-store' }).then(r => { const copy = r.clone(); caches.open(VERSION).then(c => c.put('index.html', copy)); return r; })
       .catch(() => caches.match('index.html')));
     return;
   }
