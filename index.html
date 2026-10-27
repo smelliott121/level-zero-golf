@@ -20,7 +20,7 @@
 <body>
 <title>S.G.S Country Club</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,500;0,600;0,700;1,600;1,700;1,800&family=Barlow:wght@400;500;600&family=Cormorant+Garamond:ital,wght@1,600;1,700&display=swap">
 <style>
 /* Layout: one-screen phone game — scoreboard strip, top-down course canvas, swing console */
 :root{
@@ -161,6 +161,71 @@ input[type=range]{width:100%;accent-color:var(--flag)}
 @keyframes scFlap{from{transform:rotateX(0)}to{transform:rotateX(180deg);z-index:0}}
 @keyframes scLetter{from{transform:translateY(0)}to{transform:translateY(-34px)}}
 @media (prefers-reduced-motion:reduce){.sc-kick,.sc-title,.sc-sub,.sc-logos canvas,.sc-env,.sc-flap,.sc-letter{animation:none}}
+.sheet.title-screen{align-items:stretch;justify-content:center;padding:0;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  background:
+    repeating-linear-gradient(115deg,rgba(255,255,255,.025) 0 2px,transparent 2px 18px),
+    radial-gradient(120% 70% at 50% 0%,rgba(46,104,68,.9) 0%,rgba(13,33,22,.94) 55%,rgba(5,12,8,.98) 100%);
+  -webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
+.ts{position:relative;width:100%;max-width:440px;margin:0 auto;min-height:100%;padding-block:18px 0;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:14px}
+.ts::before{content:"";position:absolute;left:16px;right:16px;top:8px;height:1px;background:linear-gradient(90deg,transparent,#c9a24a,transparent)}
+.ts-brand{display:flex;flex-direction:column;align-items:center;gap:2px;text-align:center;padding-top:6px}
+.ts-crest{width:64px;height:70px;filter:drop-shadow(0 6px 10px rgba(0,0,0,.5));animation:tsDrop .7s cubic-bezier(.2,1.3,.4,1) both}
+.ts-word{margin:4px 0 0;display:flex;flex-direction:column;align-items:center;line-height:.9}
+.ts-sgs{position:relative;font-family:"Cormorant Garamond",Georgia,serif;font-style:italic;font-weight:700;font-size:78px;letter-spacing:.02em;
+  background:linear-gradient(180deg,#fff7d6 0%,#f0cf72 38%,#9c6d16 52%,#e9c463 64%,#fff1bd 100%);-webkit-background-clip:text;background-clip:text;color:transparent;
+  -webkit-text-stroke:1px rgba(60,40,5,.55);filter:drop-shadow(0 3px 0 #0b1a12) drop-shadow(0 8px 14px rgba(0,0,0,.55));animation:tsIn .7s .15s both}
+.ts-cc{display:flex;align-items:center;gap:10px;margin-top:4px;font-family:var(--display);font-weight:600;font-size:15px;letter-spacing:.5em;text-transform:uppercase;color:#efe6cc;padding-left:.5em;animation:tsIn .7s .3s both}
+.ts-cc::before,.ts-cc::after{content:"";width:28px;height:1px;background:#c9a24a}
+.ts-est{margin:6px 0 0;font-family:"Cormorant Garamond",Georgia,serif;font-style:italic;font-size:15px;color:#c9a24a;letter-spacing:.12em;animation:tsIn .7s .4s both}
+.ts-player{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:12px;background:linear-gradient(90deg,rgba(0,0,0,.35),rgba(0,0,0,.12));border:1px solid rgba(201,162,74,.35);animation:tsIn .6s .45s both}
+.ts-player canvas{width:56px;height:56px;border-radius:50%;flex:none;border:2px solid #c9a24a;background:#0a1510}
+.ts-who{flex:1;min-width:0}
+.ts-who b{display:block;font-family:var(--display);font-style:italic;font-weight:700;font-size:22px;text-transform:uppercase;letter-spacing:.03em;line-height:1.05;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ts-who p{margin:2px 0 0;color:var(--muted);font-size:12.5px;line-height:1.3}
+.ts-who p b{display:inline;font:inherit;color:var(--flag);font-style:normal;text-transform:none;letter-spacing:0}
+.ts-hc{flex:none;text-align:center;padding:4px 10px;border-left:1px solid rgba(201,162,74,.35)}
+.ts-hc span{display:block;font-family:var(--display);font-size:11px;letter-spacing:.18em;color:#c9a24a}
+.ts-hc b{font-family:var(--display);font-style:italic;font-size:30px;line-height:1;color:#fff3c4;font-variant-numeric:tabular-nums}
+.ts-course{display:flex;align-items:center;gap:6px;animation:tsIn .6s .55s both}
+.ts-arr{flex:none;width:44px;height:52px;border:0;background:none;color:#c9a24a;font-size:20px;border-radius:8px}
+.ts-arr:active{transform:scale(.92)}
+.ts-cname{flex:1;min-width:0;text-align:center;padding:6px 8px;border-radius:10px;background:rgba(0,0,0,.28);border:1px solid rgba(255,255,255,.06)}
+.ts-cname small{display:block;font-family:var(--display);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+.ts-cname b{display:block;font-family:var(--display);font-style:italic;font-weight:700;font-size:24px;text-transform:uppercase;letter-spacing:.03em;line-height:1.1}
+.ts-cname span{font-size:12px;color:#c9a24a;font-variant-numeric:tabular-nums}
+.ts-blurb{margin:-6px 0 0;color:var(--muted);font-size:13px;line-height:1.45;text-align:center}
+.ts-menu{display:flex;flex-direction:column;gap:9px}
+#roundBtns{display:flex;flex-direction:column;gap:9px}
+.ts-item,#roundBtns .btn{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:1px;width:100%;height:auto;min-height:58px;padding:10px 18px 10px 26px;border:0;border-radius:4px;text-align:left;color:var(--ink);
+  background:linear-gradient(90deg,rgba(255,255,255,.1),rgba(255,255,255,.02) 70%,transparent);transform:skewX(-10deg);transition:transform .18s,background .18s;animation:tsSlide .5s both}
+.ts-item>*{transform:skewX(10deg)}
+.ts-item::before,#roundBtns .btn::before{content:"";position:absolute;left:0;top:0;bottom:0;width:6px;background:#c9a24a;border-radius:2px}
+.ts-item::after,#roundBtns .btn::after{content:"▶";position:absolute;right:16px;top:50%;transform:translateY(-50%) skewX(10deg);color:#c9a24a;opacity:0;transition:opacity .18s,right .18s}
+.ts-item:hover,.ts-item:focus-visible,#roundBtns .btn:hover,#roundBtns .btn:focus-visible{transform:skewX(-10deg) translateX(6px);background:linear-gradient(90deg,rgba(201,162,74,.28),rgba(255,255,255,.04) 70%,transparent)}
+.ts-item:hover::after,.ts-item:focus-visible::after,#roundBtns .btn:hover::after,#roundBtns .btn:focus-visible::after{opacity:1;right:12px}
+.ts-lab,#roundBtns .btn{font-family:var(--display);font-style:italic;font-weight:700;font-size:25px;text-transform:uppercase;letter-spacing:.04em;line-height:1.05}
+.ts-item small{font-family:var(--body);font-style:normal;font-size:12px;font-weight:500;letter-spacing:0;text-transform:none;color:var(--muted);line-height:1.3;max-width:92%}
+#roundBtns .btn{justify-content:center}
+#roundBtns .btn.main{background:linear-gradient(90deg,#f3c534,#d9a520 70%,#b8860b);color:#1d1a06;min-height:66px;font-size:30px}
+#roundBtns .btn.main::before{background:#fff3c4}
+#roundBtns .btn.main::after{color:#1d1a06;opacity:1}
+#roundBtns .btn:disabled{opacity:.5}
+#roundBtns .btn:nth-child(1){animation-delay:.6s}#roundBtns .btn:nth-child(2){animation-delay:.66s}
+#tsPractice{animation-delay:.72s}#tsShop{animation-delay:.8s}#lbBtn.ts-item{animation-delay:.88s}#menuPlayer.ts-item{animation-delay:.96s}
+.ts-drop{padding:2px 0 4px 14px}
+.ts-acct{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;background:rgba(0,0,0,.28);border:1px solid rgba(255,255,255,.06)}
+.ts-acct .gi{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.ts-acct b{font-weight:600}.ts-acct small{color:var(--muted);font-size:12px;line-height:1.3}
+.ts-acct .btn{height:40px;padding:0 14px}
+.ts-back{align-self:center;background:none;border:0;color:var(--muted);font-weight:600;text-decoration:underline;text-underline-offset:3px;padding:6px 10px}
+.ts-ticker{position:sticky;bottom:0;margin:auto calc(-1*max(16px,env(safe-area-inset-left,0px))) 0;display:flex;align-items:center;gap:10px;padding:10px max(16px,env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));
+  background:linear-gradient(180deg,rgba(5,12,8,.6),#050c08);border-top:1px solid rgba(201,162,74,.4);font-size:12.5px;color:#efe6cc;min-height:42px}
+.ts-tag{flex:none;font-family:var(--display);font-style:italic;font-weight:700;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#1d1a06;background:#c9a24a;padding:2px 8px;transform:skewX(-10deg)}
+#tsTip{flex:1;min-width:0;transition:opacity .4s}
+@keyframes tsIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes tsDrop{from{opacity:0;transform:translateY(-16px) scale(.8)}to{opacity:1;transform:none}}
+@keyframes tsSlide{from{opacity:0;transform:skewX(-10deg) translateX(-24px)}to{opacity:1;transform:skewX(-10deg)}}
+@media (prefers-reduced-motion:reduce){.ts-crest,.ts-sgs,.ts-cc,.ts-est,.ts-player,.ts-course,.ts-item,#roundBtns .btn{animation:none}}
 .tierh{font-family:var(--display);font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:var(--flag);margin:4px 0 0}
 .brand{display:flex;flex-direction:column;gap:6px;padding:12px;border-radius:10px;border:1px solid var(--line);background:var(--track)}
 .brand.locked{opacity:.5}
@@ -260,23 +325,51 @@ input[type=range]{width:100%;accent-color:var(--flag)}
       </div>
     </div>
 
-    <div class="sheet" id="menuSheet" hidden>
-      <div class="card">
-        <div class="menu-hero"><h2>S.G.S Country Club</h2><p class="sub" id="menuSub"></p></div>
-        <h3>Choose a course</h3>
-        <div class="seg" id="coursePick"></div>
-        <p class="sub" id="courseBlurb"></p>
-        <div class="btnrow" id="roundBtns"></div>
-        <div class="sc" id="menuCard"></div>
-        <h3>Equipment</h3>
-        <div id="gearNow"></div>
-        <div id="acctBlock" hidden><h3>Account</h3><div class="gearnow" style="margin-top:6px"><div class="gi"><b id="acctName">Not signed in</b><small id="acctSub">Sign in to post rounds to the leaderboard and keep your progress on any phone.</small></div><button class="btn" id="acctBtn" style="height:40px;padding:0 14px">Sign in</button></div></div>
-        <h3>Leaderboard</h3>
-        <button class="btn" id="lbBtn">See the leaderboard</button>
-        <h3>Practice area</h3>
-        <p class="sub" id="pracSub"></p>
-        <div class="prac" id="pracList"></div>
-        <div class="btnrow"><button class="btn" id="menuPlayer">Player &amp; skills</button><button class="btn" id="menuClose">Back to play</button></div>
+    <div class="sheet title-screen" id="menuSheet" hidden>
+      <div class="ts">
+        <header class="ts-brand">
+          <svg class="ts-crest" viewBox="0 0 120 132" aria-hidden="true">
+            <defs><linearGradient id="tsGold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff3c4"/><stop offset=".45" stop-color="#e2b84a"/><stop offset=".55" stop-color="#a77a1f"/><stop offset="1" stop-color="#f0cf72"/></linearGradient></defs>
+            <path d="M60 4 L110 18 V62 C110 96 88 116 60 128 C32 116 10 96 10 62 V18 Z" fill="#123222" stroke="url(#tsGold)" stroke-width="5"/>
+            <path d="M60 14 L101 25 V62 C101 90 83 107 60 117 C37 107 19 90 19 62 V25 Z" fill="none" stroke="url(#tsGold)" stroke-width="1.2" opacity=".7"/>
+            <path d="M34 98 L84 36 M86 98 L36 36" stroke="url(#tsGold)" stroke-width="4" stroke-linecap="round"/>
+            <path d="M80 30 l9 -4 l-2 10 Z M40 30 l-9 -4 l2 10 Z" fill="url(#tsGold)"/>
+            <line x1="60" y1="30" x2="60" y2="84" stroke="#f4f1e8" stroke-width="2"/>
+            <path d="M60 30 L78 36 L60 42 Z" fill="#c8352e"/>
+            <circle cx="60" cy="90" r="6" fill="#fff"/>
+          </svg>
+          <h1 class="ts-word"><span class="ts-sgs">S·G·S</span><span class="ts-cc">Country Club</span></h1>
+          <p class="ts-est"><span>Est.</span> MMXXVI</p>
+        </header>
+
+        <div class="ts-player">
+          <canvas id="tsFace" width="160" height="160" aria-hidden="true"></canvas>
+          <div class="ts-who"><b id="tsName">Player</b><p id="menuSub"></p></div>
+          <div class="ts-hc"><span>HCP</span><b id="tsHcp">–</b></div>
+        </div>
+
+        <div class="ts-course">
+          <button class="ts-arr" id="cPrev" aria-label="Previous course">◀</button>
+          <div class="ts-cname"><small>Course</small><b id="cName"></b><span id="cPar"></span></div>
+          <button class="ts-arr" id="cNext" aria-label="Next course">▶</button>
+        </div>
+        <p class="ts-blurb" id="courseBlurb"></p>
+
+        <nav class="ts-menu" aria-label="Main menu">
+          <div id="roundBtns"></div>
+          <div class="sc" id="menuCard"></div>
+          <button class="ts-item" id="tsPractice" aria-expanded="false"><span class="ts-lab">Practice Area</span><small id="pracSub"></small></button>
+          <div class="ts-drop" id="pracWrap" hidden><div class="prac" id="pracList"></div></div>
+          <button class="ts-item" id="tsShop"><span class="ts-lab">Pro Shop</span><small id="tsShopSub"></small></button>
+          <button class="ts-item" id="lbBtn"><span class="ts-lab">Leaderboard</span><small>Best rounds on each course</small></button>
+          <button class="ts-item" id="menuPlayer"><span class="ts-lab">Locker Room</span><small>Your golfer, skills and handicap card</small></button>
+        </nav>
+
+        <div id="gearNow" hidden></div>
+        <div id="acctBlock" class="ts-acct" hidden><div class="gi"><b id="acctName">Not signed in</b><small id="acctSub">Sign in to post rounds to the leaderboard and keep your progress on any phone.</small></div><button class="btn" id="acctBtn">Sign in</button></div>
+        <button class="ts-back" id="menuClose">Back to the course</button>
+
+        <div class="ts-ticker" aria-live="off"><span class="ts-tag">Clubhouse</span><span id="tsTip"></span></div>
       </div>
     </div>
 
@@ -955,14 +1048,21 @@ const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'
 function openMenu(){
   closeSheets();
   const name=AV.name&&AV.name!=='Player'?AV.name:'Player';
-  $('#menuSub').innerHTML='';$('#menuSub').append(`${name} · Level `,Object.assign(document.createElement('b'),{textContent:P.lvl}),P.sp?` · ${P.sp} skill points to spend`:'');
+  $('#menuSub').innerHTML='';$('#menuSub').append('Level ',Object.assign(document.createElement('b'),{textContent:P.lvl}),` · ${P.rounds} round${P.rounds===1?'':'s'}`,P.sp?` · ${P.sp} skill points to spend`:'');
   const rb=$('#roundBtns');rb.innerHTML='';
   const mk=(t,cls,fn)=>{const b=document.createElement('button');b.className='btn '+cls;b.textContent=t;b.onclick=fn;rb.appendChild(b)};
-  const cp=$('#coursePick');cp.innerHTML='';
-  Object.values(COURSES).forEach(co=>{const bt=document.createElement('button');bt.textContent=co.name;bt.setAttribute('aria-pressed',String(co.id===pickCourse));
-    bt.onclick=()=>{pickCourse=co.id;ls.set('lzg_course',co.id);openMenu()};cp.appendChild(bt)});
+  const ids=Object.keys(COURSES),pick=d=>{pickCourse=ids[(ids.indexOf(pickCourse)+d+ids.length)%ids.length];ls.set('lzg_course',pickCourse);openMenu()};
+  $('#cPrev').onclick=()=>pick(-1);$('#cNext').onclick=()=>pick(1);
   const pc=COURSES[pickCourse],pcPar=pc.holes.reduce((a,h)=>a+h.par,0),pb=P.bests[pickCourse];
-  $('#courseBlurb').textContent=`${pc.blurb} 9 holes, par ${pcPar}.${pb?` Your best: ${fmtPar(pb.toPar)} (${pb.strokes}).`:''}${R&&R.c!==pickCourse?` Starting here ends your round at ${COURSES[R.c].name}.`:''} Holes today: ${holesToday()} of ${MAX_HOLES_DAY}.`;
+  $('#cName').textContent=pc.name;$('#cPar').textContent=`9 holes · Par ${pcPar}${pb?` · Best ${fmtPar(pb.toPar)}`:''}`;
+  $('#courseBlurb').textContent=`${pc.blurb}${R&&R.c!==pickCourse?` Starting here ends your round at ${COURSES[R.c].name}.`:''} Holes today: ${holesToday()} of ${MAX_HOLES_DAY}.`;
+  $('#tsName').textContent=name;$('#tsHcp').textContent=P.hc.exact==null?'–':(Math.round(P.hc.exact)<0?'+'+Math.abs(Math.round(P.hc.exact)):Math.round(P.hc.exact));
+  drawFace($('#tsFace').getContext('2d'),160);
+  {const b=brand(),nx=BRANDS.find(x=>x.lvl>P.lvl),pend=BRANDS.some(x=>x.lvl<=P.lvl)&&(!b||P.gear.left===0);
+   $('#tsShopSub').textContent=b?`${b.name} staff · ${P.gear.left>0?P.gear.left+' rounds left on contract':'contract up, offers waiting'}`:pend?'Sponsor offers are waiting':`Hand-me-down clubs${nx?` · first offers at level ${nx.lvl}`:''}`}
+  $('#tsShop').onclick=()=>openGear();
+  $('#tsPractice').onclick=()=>{const w=$('#pracWrap');w.hidden=!w.hidden;$('#tsPractice').setAttribute('aria-expanded',String(!w.hidden))};
+  startTips();
   const sameRound=R&&R.c===pickCourse;if(sameRound&&!(G&&G.mode==='round'))useCourse(R.c);
   const inRound=sameRound&&R.scores.length>0;
   const newRound=()=>{if(!canStartRound()){toast('You have played your 18 holes today. Back tomorrow.','bad');return}useCourse(pickCourse);R={c:CUR,i:0,scores:[]};saveR();closeSheets();startHole(0)};
@@ -975,7 +1075,7 @@ function openMenu(){
   $('#menuCard').innerHTML=inRound?scorecard(-1):'';$('#menuCard').hidden=!inRound;
   // practice
   const done=pracToday(),left=pracLeft(),midHole=G&&G.mode==='round'&&G.strokes>0&&G.state!=='done';
-  $('#pracSub').textContent=!left.length?'All four challenges done today. Come back tomorrow.':midHole?'Finish the hole you are on first.':'One go at each challenge per day. Starting a challenge uses that go.';
+  $('#pracSub').textContent=!left.length?'All four done today. Back tomorrow.':midHole?'Finish the hole you are on first.':`${left.length} of 4 challenges left today`;
   const pl=$('#pracList');pl.innerHTML='';
   PKEYS.forEach(k=>{const c=PRACTICE[k],b=document.createElement('button');const isDone=k in done;
     b.innerHTML='<span class="pi"><b></b><small></small></span><span class="ps"></span>';
@@ -986,6 +1086,13 @@ function openMenu(){
   $('#menuClose').hidden=!(G&&G.state!=='done'&&(G.mode==='practice'||R));
   $('#menuSheet').hidden=false;
 }
+const TIPS=['Stop the needle in the green and you will never shank it.','Inside 3 ft on the green is a gimme.','The perfect-pace sliver shrinks on putts over 15 ft.',
+  'Club rule: 18 holes a day. Make them count.','Six rounds earns you a handicap. Then the club competitions open.','White stakes are out of bounds: one shot and replay.',
+  'Wind is strongest on Bayview Heath. Check the flag before you swing.','Uphill putts need more pace. The window moves for you.','Sponsors notice good golfers. Keep levelling up.',
+  'The practice area opens every morning. One go at each challenge.'];
+let tipT=null,tipI=0;
+function startTips(){const el=$('#tsTip');if(!el)return;const show=()=>{el.style.opacity=0;setTimeout(()=>{el.textContent=TIPS[tipI++%TIPS.length];el.style.opacity=1},300)};
+  if(!tipT){tipI=Math.floor(Math.random()*TIPS.length);show();tipT=setInterval(()=>{if($('#menuSheet').hidden){clearInterval(tipT);tipT=null;return}show()},5200)}}
 /* ---------- equipment deals ---------- */
 function fxChips(fx){const box=document.createElement('div');box.className='fx';
   for(const k in fx){const v=fx[k];if(!v)continue;const s=document.createElement('span');s.className=v>0?'p':'n';s.textContent=`${FXN[k]} ${v>0?'+':''}${v}`;box.appendChild(s)}return box}
