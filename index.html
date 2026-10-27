@@ -545,7 +545,7 @@ const P={dealsSeen:0,lvl:0,xp:0,sp:0,st:{},prac:{date:'',done:{}},gear:null,best
 (()=>{const s=ls.get('lzg');if(!s)return;P.lvl=clamp(s.lvl|0,0,50);P.xp=Math.max(0,s.xp|0);
   if(s.st){STATS.forEach(k=>P.st[k[0]]=clamp(s.st[k[0]]|0,0,SMAX));P.sp=Math.max(0,s.sp|0)}else P.sp=P.lvl*SP_PER_LVL;
   if(s.prac&&s.prac.done)P.prac=s.prac;
-  if(s.gear&&BRANDS.some(b=>b.id===s.gear.id))P.gear=s.gear;if(s.bests&&typeof s.bests==='object')P.bests=s.bests;else if(s.best)P.bests.links=s.best;P.rounds=s.rounds|0;P.dealsSeen=typeof s.dealsSeen==='number'?s.dealsSeen:(s.gear?Math.max(0,...DEAL_TIERS.filter(t=>t<=P.lvl)):0);if(s.day)P.day=s.day;if(s.hc&&Array.isArray(s.hc.cards))P.hc=s.hc;if(s.stats)P.stats=s.stats})();
+  if(s.gear&&BRANDS.some(b=>b.id===s.gear.id))P.gear=s.gear;if(s.bests&&typeof s.bests==='object')P.bests=s.bests;else if(s.best)P.bests.links=s.best;P.rounds=s.rounds|0;if(Array.isArray(s.pend))P.pend=s.pend;if(s.resetAt)P.resetAt=s.resetAt;P.dealsSeen=typeof s.dealsSeen==='number'?s.dealsSeen:(s.gear?Math.max(0,...DEAL_TIERS.filter(t=>t<=P.lvl)):0);if(s.day)P.day=s.day;if(s.hc&&Array.isArray(s.hc.cards))P.hc=s.hc;if(s.stats)P.stats=s.stats})();
 const save=()=>ls.set('lzg',P);
 // XP to the next level, tuned by simulating full daily play (all 18 holes + all four practice challenges):
 // level 4 around day 5, level 10 around day 20-23, then each level takes about a week (level 15 around day 60)
@@ -1531,8 +1531,8 @@ async function sbInit(){
   if(!window.supabase)return;
   try{SB=window.supabase.createClient(cfg.url,cfg.key,{auth:{persistSession:true,autoRefreshToken:true}});
     const {data}=await SB.auth.getSession();SBUSER=data.session?data.session.user:null;
-    SB.auth.onAuthStateChange((ev,ses)=>{const was=SBUSER&&SBUSER.id;SBUSER=ses?ses.user:null;if(SBUSER&&SBUSER.id!==was)sbPull();renderAccount()});
-    if(SBUSER)await sbPull();
+    SB.auth.onAuthStateChange((ev,ses)=>{const was=SBUSER&&SBUSER.id;SBUSER=ses?ses.user:null;if(SBUSER&&SBUSER.id!==was)sbPull().then(()=>flushRounds(false));renderAccount()});
+    if(SBUSER){await sbPull();flushRounds(false)}
   }catch(e){SB=null}
   renderAccount();
 }
@@ -1546,7 +1546,7 @@ async function sbPull(){
   if(!SB||!SBUSER)return;
   try{const {data}=await SB.from('players').select('nick,save').eq('id',SBUSER.id).maybeSingle();
     if(data){SBNICK=data.nick||'';const sv=data.save;
-      if(sv&&sv.P&&(sv.P.rounds||0)>(P.rounds||0)){Object.assign(P,sv.P);if(sv.AV)Object.assign(AV,sv.AV);save();saveAv();buildBall&&buildBall();updateLvl();toast('Progress restored from your account','good')}
+      if(sv&&sv.P&&(sv.P.resetAt||0)>=(P.resetAt||0)&&((sv.P.resetAt||0)>(P.resetAt||0)||(sv.P.rounds||0)>(P.rounds||0))){Object.assign(P,sv.P);if(sv.AV)Object.assign(AV,sv.AV);save();saveAv();buildBall&&buildBall();updateLvl();toast('Progress restored from your account','good')}
       else await sbSaveProfile()}
     else await sbSaveProfile();
   }catch(e){}
@@ -1556,11 +1556,25 @@ async function sbSaveProfile(){
   if(!SB||!SBUSER)return;const b=brand(),nick=(SBNICK||userFrom(SBUSER.email)).slice(0,16);
   try{await SB.from('players').upsert({id:SBUSER.id,nick,level:P.lvl,handicap:P.hc.exact,rounds:P.rounds,brand:b?b.name:null,save:{P,AV},updated_at:new Date().toISOString()});SBNICK=nick}catch(e){}
 }
+// every finished round is queued on the phone first, then posted; anything that fails (no signal, signed out) is retried later
 async function sbRound(card,stab){
-  if(!SB||!SBUSER)return;
-  try{const {error}=await SB.from('rounds').insert({course:card.c,scores:card.s,gross:0,to_par:0,stableford:stab??null,handicap:P.hc.exact});
-    if(error)toast(/18 holes/.test(error.message)?'Round not posted: 18 holes a day.':'Round saved on this phone; posting to the board failed.','bad');else toast('Round posted to the leaderboard','good')}catch(e){}
+  P.pend=(P.pend||[]).concat([{c:card.c,s:card.s,stab:stab??null,hcp:P.hc.exact,at:Date.now()}]).slice(-10);save();
+  if(!SB){return}
+  if(!SBUSER){toast('Round saved on this phone. Sign in to post it to the leaderboard.','');return}
+  await flushRounds(true);
 }
+let flushing=false;
+async function flushRounds(loud){
+  if(!SB||!SBUSER||flushing||!(P.pend&&P.pend.length))return;flushing=true;let posted=0,limited=0;
+  try{while(P.pend.length){const r=P.pend[0];
+      const {error}=await SB.from('rounds').insert({course:r.c,scores:r.s,gross:0,to_par:0,stableford:r.stab,handicap:r.hcp});
+      if(error){if(/18 holes/.test(error.message)){limited++;P.pend.shift();save();continue}break}
+      posted++;P.pend.shift();save()}
+  }catch(e){}
+  flushing=false;
+  if(loud||posted||limited)toast(posted?`Round${posted>1?'s':''} posted to the leaderboard`:limited?'Round not posted: 18 holes a day.':'Round saved on this phone; it will post when you are back online.',posted?'good':'bad');
+}
+addEventListener('online',()=>flushRounds(false));
 let acMode='in';
 // accounts use a username only: Supabase gets a placeholder address built from it, which is never shown and never emailed
 const userMail=u=>`${u.toLowerCase()}@players.levelzerogolf.app`;
@@ -1750,7 +1764,7 @@ let setFrom=null;
 function openPlayer(){setFrom=!$('#menuSheet').hidden?'menu':null;closeSheets();$('#pName').value=AV.name==='Player'?'':AV.name;$('#pName').placeholder='Player';$('#resetBtn').textContent='Reset progress';delete $('#resetBtn').dataset.armed;buildSwatches();buildSkills();renderCard();$('#setSheet').hidden=false}
 $('#lvlBtn').onclick=()=>{if(G&&(G.state==='meter'||G.state==='fly'))return;openPlayer()};
 const clearStats=()=>STATS.forEach(s=>P.st[s[0]]=0);
-$('#resetBtn').onclick=e=>{const b=e.currentTarget;if(b.dataset.armed){P.lvl=0;P.xp=0;P.sp=0;clearStats();P.gear=null;P.bests={};P.rounds=0;P.day={date:'',holes:0};P.hc={cards:[],exact:null,last:null};P.stats={};P.prac={date:'',done:{}};save();R=null;saveR();delete b.dataset.armed;startHole(0);openMenu()}else{b.dataset.armed=1;b.textContent='Tap again to reset to level 0'}};
+$('#resetBtn').onclick=e=>{const b=e.currentTarget;if(b.dataset.armed){P.resetAt=Date.now();P.pend=[];P.lvl=0;P.xp=0;P.sp=0;clearStats();P.gear=null;P.bests={};P.rounds=0;P.day={date:'',holes:0};P.hc={cards:[],exact:null,last:null};P.stats={};P.prac={date:'',done:{}};save();R=null;saveR();delete b.dataset.armed;sbSaveProfile();startHole(0);openMenu()}else{b.dataset.armed=1;b.textContent='Tap again to reset to level 0'}};
 $('#closeSet').onclick=()=>{$('#setSheet').hidden=true;if(G&&G.state==='aim'){newRead();setDefaults()}updateUI();if(setFrom==='menu'||!G||G.state==='done'||(G.mode==='round'&&!R))openMenu()};
 
 /* ---------- avatar: side-on, facing the ball ---------- */
