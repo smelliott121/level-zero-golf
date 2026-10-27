@@ -1,8 +1,10 @@
-# Level Zero Golf
+# S.G.S Country Club
+
+(Repository and internal names still say level-zero-golf.)
 
 A mobile golf career game. Everyone starts at level 0. Practise, finish rounds and sign club deals to climb.
 
-- **Two 9-hole courses:** Level Zero Links (par 35) and Bayview Heath (par 33), a tight heathland nine inspired by a Jersey clifftop course.
+- **Two 9-hole courses:** S.G.S Links (par 35) and Bayview Heath (par 33), a tight heathland nine inspired by a Jersey clifftop course.
 - **Tap-tap swing:** the green window sits at the distance you choose and widens as you improve. Stopping in the window never gives a horror shot.
 - **Real misses:** shanks, slices, snap hooks, tops, chunks, skulls, stuck in the bunker, water and out of bounds.
 - **Putting:** contoured greens, a putt guide, a perfect-line sliver and a perfect-pace sliver. Anything inside 3 ft is a gimme.
