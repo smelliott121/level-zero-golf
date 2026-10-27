@@ -4,6 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <meta name="theme-color" content="#0e1c15">
+<meta name="color-scheme" content="only dark">
+<meta name="darkreader-lock">
 <meta name="description" content="S.G.S Country Club: start as a hacker, practise, sign club deals and climb the leaderboard.">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -12,7 +14,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/icon-180.png">
-<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font-size:14px;overscroll-behavior:none}img{max-width:100%}[hidden]{display:none!important}</style>
+<style>:root{color-scheme:only dark;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font-size:14px;overscroll-behavior:none}img{max-width:100%}[hidden]{display:none!important}</style>
 <!-- online accounts and leaderboard: fill in your Supabase project URL and anon (public) key -->
 <script>window.LZG_SUPABASE={url:'https://zsfbzsnsjktlzqzctrmt.supabase.co',key:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpzZmJ6c25zamt0bHpxemN0cm10Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMwNDc0ODksImV4cCI6MjEwODYyMzQ4OX0.HliGORUnKdwSPdeqopIaN5V--b4c-TjWstSdV_LkoZU'};</script>
 <script src="vendor/supabase.js" defer></script>
@@ -29,7 +31,7 @@
   --zone:rgba(123,216,143,.45); --track:#08130d; --scrim:rgba(5,12,8,.74);
   --display:"Barlow Condensed","Arial Narrow",sans-serif;
   --body:"Barlow",system-ui,-apple-system,sans-serif;
-  color-scheme:dark;
+  color-scheme:only dark;
 }
 [hidden]{display:none!important}
 body.sheet-open .top,body.sheet-open .console{display:none}
@@ -77,16 +79,19 @@ button.chip{color:var(--ink)}
 .pick .v small{display:block;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.08em}
 .pick .v b{display:block;font-family:var(--display);font-size:18px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;font-variant-numeric:tabular-nums;white-space:nowrap}
 
-.meter{position:relative;height:34px;border-radius:6px;background:var(--track);border:1px solid var(--line);overflow:hidden}
-.meter .fill{position:absolute;top:0;bottom:0;left:0;background:linear-gradient(90deg,transparent,rgba(243,197,52,.18));width:0}
-.meter .zone{position:absolute;top:0;bottom:0;background:var(--zone);border-left:1px solid var(--good);border-right:1px solid var(--good);transition:left .25s,width .25s}
-.meter .sweet{position:absolute;top:0;bottom:0;background:var(--good);opacity:.85;box-shadow:0 0 8px var(--good);transition:left .25s,width .25s}
-.meter .needle.perfect{background:#fff;box-shadow:0 0 10px #fff}
-.meter .full{position:absolute;top:0;bottom:0;width:1px;background:var(--muted);opacity:.6}
-.meter .lab{position:absolute;top:50%;transform:translateY(-50%);font-family:var(--display);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);opacity:.7;pointer-events:none}
-.meter .needle{position:absolute;top:-1px;bottom:-1px;width:4px;margin-left:-2px;background:var(--flag);border-radius:2px;box-shadow:0 0 8px var(--flag)}
-.meter .needle.hit{background:var(--good);box-shadow:0 0 8px var(--good)}
-.meter .needle.miss{background:var(--bad);box-shadow:0 0 8px var(--bad)}
+.meter{position:relative;height:58px;border-radius:10px;background:repeating-linear-gradient(90deg,rgba(255,255,255,.07) 0 1px,transparent 1px 10%),#050b07;border:2px solid #c9a24a;overflow:hidden;box-shadow:inset 0 2px 8px rgba(0,0,0,.6)}
+.meter .fill{position:absolute;top:0;bottom:0;left:0;background:linear-gradient(90deg,rgba(243,197,52,0),rgba(243,197,52,.35));width:0}
+.meter .zone{position:absolute;top:0;bottom:0;background:linear-gradient(180deg,#4be07a,#1fa64a);border-left:3px solid #eaffef;border-right:3px solid #eaffef;box-shadow:0 0 14px rgba(75,224,122,.7);transition:left .25s,width .25s}
+.meter .sweet{position:absolute;top:0;bottom:0;background:#fff7c2;box-shadow:0 0 12px #fff3a0;transition:left .25s,width .25s}
+.meter .full{position:absolute;top:0;bottom:0;width:2px;background:#f07a5f}
+.meter .lab{position:absolute;top:3px;z-index:2;font-family:var(--display);font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#efe6cc;pointer-events:none;text-shadow:0 1px 2px #000}
+.meter .needle{position:absolute;top:0;bottom:0;width:8px;margin-left:-4px;background:#fff;border:2px solid #050b07;border-radius:3px;box-shadow:0 0 0 2px #fff,0 0 14px rgba(255,255,255,.9)}
+.meter .needle::before,.meter .needle::after{content:"";position:absolute;left:50%;transform:translateX(-50%);border:7px solid transparent}
+.meter .needle::before{top:-2px;border-top-color:#fff}
+.meter .needle::after{bottom:-2px;border-bottom-color:#fff}
+.meter .needle.perfect{background:#fff7c2;box-shadow:0 0 0 2px #fff7c2,0 0 18px #fff3a0}
+.meter .needle.hit{background:#4be07a;box-shadow:0 0 0 2px #4be07a,0 0 16px #4be07a}
+.meter .needle.miss{background:#f07a5f;box-shadow:0 0 0 2px #f07a5f,0 0 16px #f07a5f}
 .swing{flex:1;height:56px;border:0;border-radius:10px;background:var(--flag);color:var(--onflag);font-family:var(--display);font-size:24px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1}
 .swing small{font-family:var(--body);font-size:11px;font-weight:600;letter-spacing:.02em;text-transform:none;opacity:.7;margin-top:3px}
 .swing:disabled{opacity:.45;cursor:default}
@@ -1657,7 +1662,7 @@ function updateUI(){
   const w=zoneHalf(),c=zoneC(),z0=Math.max(0,c-w),z1=Math.min(1,c+w);
   $('#zone').style.left=z0*100+'%';$('#zone').style.width=(z1-z0)*100+'%';
   const sw0=$('#sweet');sw0.hidden=!putt;if(putt){const sf=sweetFrac();sw0.style.left=(c-w*sf)*100+'%';sw0.style.width=w*sf*200+'%'}
-  const full=100/OVER;$('#full').style.left=full+'%';$('#fullLab').style.left=`calc(${full}% + 5px)`;
+  const full=100/OVER;$('#full').style.left=full+'%';$('#fullLab').style.left=`calc(${full}% - 30px)`;
   const aiming=G.state==='aim',a=allowed();
   $('#clubPrev').disabled=!aiming||a.indexOf(G.club)<=0;$('#clubNext').disabled=!aiming||a.indexOf(G.club)>=a.length-1;
   $('#wantDn').disabled=!aiming||G.want<=minWant()+.01;$('#wantUp').disabled=!aiming||(!putt&&G.want>=clubMax(G.club)-.01);
